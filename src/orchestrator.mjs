@@ -34,7 +34,8 @@ function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalize(value[key])]));
   return value;
-}\nexport function createEvidenceManifest(run, results, runner) {
+}
+export function createEvidenceManifest(run, results, runner) {
   const aggregate=aggregateResults(run,results);
   const payload={schemaVersion:"1.0",run:{runId:run.runId,repository:run.repository,ref:run.ref,commitSha:run.commitSha,policyVersion:run.policyVersion},runner,aggregate};
   const canonical=JSON.stringify(canonicalize(payload));
