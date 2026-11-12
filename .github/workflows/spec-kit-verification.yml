@@ -26,6 +26,7 @@ concurrency:
 
 jobs:
   consolidated-tests:
+    if: ${{ vars.ATHLYS_CI_READY == 'true' }}
     name: Six-component test suite
     runs-on: ubuntu-24.04
     timeout-minutes: 8
@@ -36,6 +37,7 @@ jobs:
           repository: heat936/Athlys1
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'spec/ci-independence-bootstrap' }}
           path: components/Athlys1
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys2
         uses: actions/checkout@v4
@@ -43,6 +45,7 @@ jobs:
           repository: heat936/Athlys2
           ref: spec/ci-independence-bootstrap
           path: components/Athlys2
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys3
         uses: actions/checkout@v4
@@ -50,6 +53,7 @@ jobs:
           repository: heat936/Athlys3
           ref: spec/ci-independence-bootstrap
           path: components/Athlys3
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys4
         uses: actions/checkout@v4
@@ -57,6 +61,7 @@ jobs:
           repository: heat936/Athlys4
           ref: spec/ci-independence-bootstrap
           path: components/Athlys4
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys5
         uses: actions/checkout@v4
@@ -64,6 +69,7 @@ jobs:
           repository: heat936/Athlys5
           ref: spec/ci-independence-bootstrap
           path: components/Athlys5
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys6
         uses: actions/checkout@v4
@@ -71,6 +77,7 @@ jobs:
           repository: heat936/Athlys6
           ref: spec/ci-independence-bootstrap
           path: components/Athlys6
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
