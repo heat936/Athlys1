@@ -69,3 +69,8 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 - Corrected cross-component test imports to resolve sibling checkouts from `components/Athlys1/integration` into `components/Athlys2` through `components/Athlys6`.
 - The most recent Athlys1 PR workflow passed after the integration path correction and action pinning. The consolidated job was skipped as designed because `ATHLYS_CI_READY` is not configured; therefore cross-component tests have still not been executed by GitHub Actions.
 - Branch-protection reads for all six repositories returned HTTP 403 from the connected GitHub integration. Branch protection is unknown, not verified absent; administrative access is required to inspect it.
+
+
+## Credential configuration re-check — 2026-11-12
+
+The repository owner reports that `ATHLYS_READ_TOKEN` and `ATHLYS_CI_READY=true` have now been configured in Athlys1. The next PR synchronization is used to verify this operationally: the live consolidated job must actually start, authenticate to Athlys2–Athlys6, and complete the six test suites. Configuration is not considered verified until that run succeeds. No credential value is stored in this repository or this document.
