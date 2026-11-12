@@ -156,3 +156,19 @@ The workflow:
 The BOM is explicitly marked `aggregate: incomplete`: it inventories detected manifests/lockfiles and the observed runner/tool environment, but does not claim to be a production binary/container/release SBOM. The Spec Kit lock is resolved per run and not yet committed, so cross-run dependency reproducibility remains a follow-up.
 
 Historical evidence caveat: earlier public Athlys1 CI artifacts and logs may contain private repository identifiers and source commit IDs. This workflow prevents new disclosure in the SBOM artifact but does not delete prior artifacts; historical purge is a separate operation and has not been attempted.
+
+
+### Verified supply-chain SBOM and signed attestations
+
+- Workflow: [supply-chain run 43232033947](https://github.com/heat936/Athlys1/actions/runs/43232033947) — success.
+- Consolidated CI for the same source commit: [run 43232043419](https://github.com/heat936/Athlys1/actions/runs/43232043419) — success.
+- CycloneDX 1.6 SBOM: 2,281 components and 307 dependency records; includes the six source snapshots, detected source/action package metadata, Spec Kit Python dependencies and the Ubuntu dpkg inventory.
+- Artifact `13950936567`: digest `sha256:f4ec52ec30b74936bca8df4f82b9ef50e1f04478ec39972188d46cb609a7dac4`. Contains only the sanitized SBOM, `spec-kit-uv.lock`, and SHA256SUMS.
+- Source archive digest: `sha256:b82c5bdaebe9947d12f71c209c50999608a27c009689ddc1ff345c95e4dcd513`; source archive is not uploaded.
+- SLSA provenance: [attestation 66718907](https://github.com/heat936/Athlys1/attestations/66718907).
+- CycloneDX SBOM: [attestation 66718927](https://github.com/heat936/Athlys1/attestations/66718927).
+- Both attestations were Sigstore-signed, published to Rekor and verified in the workflow using `gh attestation verify`.
+- The public SBOM redacts private repository names, private commit IDs and private paths. A separate internal enriched companion is kept outside GitHub.
+- The SBOM explicitly declares `aggregate: incomplete` because it describes the CI source bundle and observed build environment, not a production binary/container/release.
+
+No merge, production deployment or release was performed. All six PRs remain open and draft.
