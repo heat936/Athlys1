@@ -8,7 +8,7 @@
 - [x] Define the component's initial versioned contract and acceptance behavior.
 - [x] Implement the component's first executable vertical slice.
 - [x] Add deterministic Node.js tests for core behavior and edge cases.
-- [x] Execute fresh tests on Ubuntu 24.04 / Node 22: 5/5 passed.
+- [x] Execute fresh tests on Ubuntu 24.04 / Node 22: 7/7 passed.
 
 ## Remaining before component closure
 - [ ] Complete security/threat-model review and document all trust boundaries.
