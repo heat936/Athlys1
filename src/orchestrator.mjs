@@ -39,9 +39,25 @@ function canonicalize(value) {
   if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalize(value[key])]));
   return value;
 }
+function canonicalDigest(payload) {
+  return createHash("sha256").update(JSON.stringify(canonicalize(payload))).digest("hex");
+}
 export function createEvidenceManifest(run, results, runner) {
   const aggregate=aggregateResults(run,results);
   const payload={schemaVersion:"1.0",run:{runId:run.runId,repository:run.repository,ref:run.ref,commitSha:run.commitSha,policyVersion:run.policyVersion},runner,aggregate};
-  const canonical=JSON.stringify(canonicalize(payload));
-  return {...payload,integrity:{algorithm:"sha256",digest:createHash("sha256").update(canonical).digest("hex"),signed:false}};
+  return {...payload,integrity:{algorithm:"sha256",digest:canonicalDigest(payload),signed:false}};
+}
+export function verifyEvidenceManifest(manifest) {
+  const errors=[];
+  if(!manifest||typeof manifest!=="object"||Array.isArray(manifest)) return {valid:false,errors:["manifest must be an object"]};
+  if(manifest.schemaVersion!=="1.0") errors.push("unsupported schemaVersion");
+  if(!manifest.run||typeof manifest.run!=="object") errors.push("run identity is missing");
+  if(!manifest.aggregate||typeof manifest.aggregate!=="object") errors.push("aggregate is missing");
+  if(manifest.integrity?.algorithm!=="sha256") errors.push("integrity algorithm must be sha256");
+  if(!/^[a-f0-9]{64}$/i.test(manifest.integrity?.digest??"")) errors.push("integrity digest must be a SHA-256 hex digest");
+  if(errors.length===0) {
+    const {integrity,...payload}=manifest;
+    if(canonicalDigest(payload)!==integrity.digest.toLowerCase()) errors.push("evidence manifest digest mismatch");
+  }
+  return {valid:errors.length===0,errors,signed:manifest.integrity?.signed===true};
 }
