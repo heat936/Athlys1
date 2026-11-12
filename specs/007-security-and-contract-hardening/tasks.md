@@ -16,10 +16,12 @@
 - [x] Run updated PR workflows and inspect every test result: all six component gates passed; 47/47 tests passed.
 - [x] Update Athlys1 immutable component lock with verified latest component SHAs.
 - [ ] Execute consolidated six-component suite after credential/readiness setup; blocked until ATHLYS_READ_TOKEN and ATHLYS_CI_READY are configured.
+- [x] Fix source-inventory manifest validation ordering; final Athlys1 suite passed 23/23 with strict pipeline failure propagation.
 
 ## Remaining security and release gates
 - [ ] Add full dependency/static/security scanning where applicable.
 - [x] Generate a CycloneDX 1.6 six-repository source-tree inventory from immutable checked-out revisions; explicitly label it as source inventory, not a dependency-complete or release-build SBOM.
+- [x] Enforce explicit Bash `pipefail` in all six component PR test gates so TAP failures cannot be masked by `tee`.
 - [ ] Generate and validate dependency-complete SBOMs from actual release build inputs.
 - [ ] Provision protected signing trust and signed build attestations.
 - [ ] Select and provision a second independent CI provider.
