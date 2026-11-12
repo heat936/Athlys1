@@ -4,10 +4,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import sys
+import importlib.util
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import build_supply_chain_sbom as sbom
+module_path = Path(__file__).resolve().parents[1] / "scripts" / "build-supply-chain-sbom.py"
+module_spec = importlib.util.spec_from_file_location("build_supply_chain_sbom", module_path)
+sbom = importlib.util.module_from_spec(module_spec)
+module_spec.loader.exec_module(sbom)
+import sys
 
 
 class SupplyChainSbomTests(unittest.TestCase):
