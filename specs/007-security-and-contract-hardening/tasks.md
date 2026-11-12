@@ -13,9 +13,9 @@
 - [x] Athlys5: redact inline credential assignments and validate alert deduplication windows.
 - [x] Athlys6: retry only explicitly retryable failures and preserve idempotency keys.
 - [ ] Athlys3: confirm existing quality-report behavior in updated consolidated suite; extend only if audit evidence identifies a defect.
-- [ ] Run updated PR workflows and inspect every test result.
-- [ ] Update Athlys1 immutable component lock with verified latest component SHAs.
-- [ ] Execute consolidated six-component suite after credential/readiness setup.
+- [x] Run updated PR workflows and inspect every test result: all six component gates passed; 47/47 tests passed.
+- [x] Update Athlys1 immutable component lock with verified latest component SHAs.
+- [ ] Execute consolidated six-component suite after credential/readiness setup; blocked until ATHLYS_READ_TOKEN and ATHLYS_CI_READY are configured.
 
 ## Remaining security and release gates
 - [ ] Add full dependency/static/security scanning where applicable.
