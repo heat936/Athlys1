@@ -46,3 +46,15 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 - **Not yet verified:** consolidated six-repository execution in one runner; current successful evidence comes from the six individual PR workflows.
 - **Future:** signed attestations, SBOM generation, APK signing/verification, second independent CI provider, durable evidence store, automated cross-repository dispatch, and end-to-end product integration tests.
 - A GitHub Actions artifact is temporary evidence, not a durable compliance archive.
+
+
+## Security-hardening verification update — 2026-11-12
+- Athlys1 evidence manifest: SHA-256 verification and tamper detection added.
+- Athlys2 runner policy: FQDN-only allowlist validation added; wildcard, URL, path, port, and duplicate entries rejected.
+- Athlys4 artifact verification: Ed25519 signature is verified over the artifact bytes against a caller-supplied trusted fingerprint set; CycloneDX 1.5/1.6 SBOM subject digest is checked against the artifact SHA-256.
+- Athlys5 observability: inline credential assignments and bearer values are redacted; alert window input is validated.
+- Athlys6 integration harness: only explicitly retryable errors are retried; retry budget remains at three and the idempotency key is reused.
+- Latest component PR checks passed: Athlys1 21/21, Athlys2 4/4, Athlys3 5/5, Athlys4 6/6, Athlys5 5/5, Athlys6 6/6 — 47/47 total. Test-evidence artifacts were present and unexpired at verification time.
+- The immutable component lock has been refreshed to the verified component PR heads.
+- **Still blocked:** the integrated six-repository job remains intentionally skipped until the read-only secret ATHLYS_READ_TOKEN and repository variable ATHLYS_CI_READY=true are configured. No secret value is available to the connector.
+- The security hardening is not a signed build-attestation system, does not generate production SBOMs from actual release builds, and does not establish durable evidence retention or a second CI provider.
