@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -57,7 +58,7 @@ class SupplyChainSbomTests(unittest.TestCase):
                     "type": "application",
                     "name": f"Athlys{i}",
                     "version": sha,
-                    "hashes": [{"alg": "SHA-256", "content": f"{i:064x}"}],
+                    "hashes": [{"alg": "SHA-256", "content": hashlib.sha256(f"source-{i}".encode()).hexdigest()}],
                     "properties": [
                         {"name": "athlys:repository", "value": f"heat936/Athlys{i}"},
                         {"name": "athlys:commit", "value": sha},
