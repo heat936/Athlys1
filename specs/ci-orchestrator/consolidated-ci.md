@@ -60,3 +60,12 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 - A new source-inventory test initially exposed two defects: duplicate-manifest validation occurred after filesystem access, and test pipelines did not explicitly enable `pipefail`. Both were corrected. The final Athlys1 test job reported 23/23 passed; all five component workflow updates for Athlys2–Athlys6 completed successfully with strict pipeline handling.
 - **Still blocked:** the integrated six-repository job remains intentionally skipped until the read-only secret ATHLYS_READ_TOKEN and repository variable ATHLYS_CI_READY=true are configured. No secret value is available to the connector.
 - The security hardening is not a signed build-attestation system, does not generate production SBOMs from actual release builds, and does not establish durable evidence retention or a second CI provider.
+
+
+## CI supply-chain hardening — 2026-11-12
+- All external GitHub Actions referenced by the six-repository CI workflows are now pinned to full 40-character commit SHAs: checkout v4, setup-node v4, upload-artifact v4, and setup-uv v5.4.2.
+- The pinned SHAs were resolved against the official upstream repositories; the setup-uv commit signature was verified through GitHub's commit verification metadata.
+- The action dependency versions and the precise SBOM scope/limitations are recorded in `specs/ci-orchestrator/dependency-inventory.md`.
+- Corrected cross-component test imports to resolve sibling checkouts from `components/Athlys1/integration` into `components/Athlys2` through `components/Athlys6`.
+- The most recent Athlys1 PR workflow passed after the integration path correction and action pinning. The consolidated job was skipped as designed because `ATHLYS_CI_READY` is not configured; therefore cross-component tests have still not been executed by GitHub Actions.
+- Branch-protection reads for all six repositories returned HTTP 403 from the connected GitHub integration. Branch protection is unknown, not verified absent; administrative access is required to inspect it.
