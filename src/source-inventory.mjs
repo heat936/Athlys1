@@ -22,7 +22,7 @@ export async function buildSourceInventory({ root, manifest, timestamp = new Dat
   if (!Array.isArray(manifest) || manifest.length !== 6) throw new TypeError("manifest must contain exactly six repository revisions");
   const seen = new Set();
   for (const item of manifest) {
-    if (!item || !/^heat936\\/Athlys[1-6]$/.test(item.repository ?? "") || !/^[a-f0-9]{40}$/.test(item.commitSha ?? "")) {
+    if (!item || !new RegExp("^heat936/Athlys[1-6]$").test(item.repository ?? "") || !/^[a-f0-9]{40}$/.test(item.commitSha ?? "")) {
       throw new TypeError("repository identity or immutable commit SHA is invalid");
     }
     if (seen.has(item.repository)) throw new TypeError("duplicate repository in manifest");
