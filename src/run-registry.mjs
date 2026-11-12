@@ -11,6 +11,7 @@ const ALLOWLIST = new Map([
 ]);
 const TERMINAL = new Set(["passed", "failed", "startup_failure", "build_failure", "timeout", "cancelled", "runner_lost"]);
 const RETRYABLE = new Set(["startup_failure", "timeout", "runner_lost"]);
+const CHECK_STATES = new Set(["passed", "failed", "startup_failure", "build_failure", "timeout", "cancelled", "cached", "skipped", "unavailable"]);
 const MAX_ATTEMPTS = 3;
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -35,17 +36,13 @@ export function createRunRegistry({ runId, policyVersion, targets }) {
   });
   if (seen.size !== ALLOWLIST.size) throw new TypeError("all six repositories are required");
   normalized.sort((a, b) => a.repository.localeCompare(b.repository));
-  return { schemaVersion: "1.0", runId, policyVersion, createdAt: new Date().toISOString(), targets: normalized, acceptedEvents: [] };
+  return { schemaVersion: "1.0", runId, policyVersion, targets: normalized, acceptedEvents: [] };
 }
 
-/**
- * Pure reducer: validates and applies one signed/transport-verified event.
- * Transport authentication and durable persistence are intentionally external.
- */
 export function applyRunEvent(registry, event) {
   if (!registry || !Array.isArray(registry.targets)) throw new TypeError("valid registry is required");
   if (!event || typeof event !== "object") throw new TypeError("event must be an object");
-  const { eventId, runId, repository, component, commitSha, attempt, status, idempotencyKey } = event;
+  const { eventId, runId, repository, component, commitSha, attempt, status, idempotencyKey, checks } = event;
   if (typeof eventId !== "string" || !eventId.trim()) throw new TypeError("eventId is required");
   if (runId !== registry.runId) throw new TypeError("runId mismatch");
   const target = registry.targets.find((x) => x.repository === repository);
@@ -53,12 +50,26 @@ export function applyRunEvent(registry, event) {
   if (commitSha !== target.commitSha) throw new TypeError("commit SHA mismatch");
   if (!Number.isInteger(attempt) || attempt < 1 || attempt > MAX_ATTEMPTS) throw new TypeError("attempt is outside the retry budget");
   if (!TERMINAL.has(status)) throw new TypeError("unsupported terminal status");
+  if (!Array.isArray(checks) || checks.length !== target.requiredChecks.length) throw new TypeError("all required check results must be included");
+  const checkNames = checks.map((check) => check?.name);
+  if (checkNames.some((name) => typeof name !== "string") ||
+      new Set(checkNames).size !== checkNames.length ||
+      target.requiredChecks.some((name) => !checkNames.includes(name)) ||
+      checkNames.some((name) => !target.requiredChecks.includes(name))) {
+    throw new TypeError("check results must exactly match the required check names");
+  }
+  if (checks.some((check) => !CHECK_STATES.has(check.status) || typeof check.fresh !== "boolean")) {
+    throw new TypeError("check result contains an unsupported status or freshness flag");
+  }
+  if (status === "passed" && checks.some((check) => check.status !== "passed" || check.fresh !== true)) {
+    throw new TypeError("passed event requires every required check to be freshly passed");
+  }
   const expectedKey = hash([runId, repository, commitSha, attempt].join("|"));
   if (idempotencyKey !== expectedKey) throw new TypeError("idempotency key mismatch");
   if (registry.acceptedEvents.includes(eventId)) return { registry, accepted: false, reason: "duplicate_event" };
   if (attempt < target.attempt) return { registry, accepted: false, reason: "stale_attempt" };
   if (attempt > target.attempt + 1) throw new TypeError("attempt sequence gap");
-  if (target.status === "passed" || target.status === "failed" || target.status === "build_failure" || target.status === "cancelled") {
+  if (["passed", "failed", "build_failure", "cancelled"].includes(target.status)) {
     return { registry, accepted: false, reason: "target_already_terminal" };
   }
   if (attempt === target.attempt && target.status !== "planned" && !RETRYABLE.has(target.status)) {
