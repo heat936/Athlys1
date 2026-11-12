@@ -50,4 +50,16 @@ The three Node action commits were resolved from official upstream release tags 
 - AC8: All six PRs remain open and draft; no merge, release, or production deployment occurs.
 
 ## Verification evidence
-Read-back and workflow-run evidence will be recorded after the updated PR branches execute. Until those checks complete, this change is implemented but not yet verified.
+## Verification evidence — first migration run
+
+- Athlys1 consolidated CI run #91: https://github.com/heat936/Athlys1/actions/runs/43228810368 — **success**.
+- Athlys2–Athlys6 PR verification runs: #13, #9, #13, #13, and #14 respectively — all **success**.
+- Athlys1 orchestrator tests: 23/23 passed.
+- Consolidated component evidence: Athlys1 27/27, Athlys2 4/4, Athlys3 5/5, Athlys4 6/6, Athlys5 5/5, Athlys6 6/6 — **53 distinct tests passed**. The separately invoked cross-component TAP file repeats four tests already discovered in Athlys1's suite, so its 4/4 is not double-counted.
+- All six component checkouts succeeded. CycloneDX 1.6 source inventory contains six components.
+- The eight checksums in `SHA256SUMS` were independently recomputed from the downloaded artifact; all matched.
+- Artifact: `athlys-six-component-evidence-...`, GitHub artifact SHA-256 `aac7cc05020df03d5a54ce4f77336ff314251961b242383047813e713594a405`, retained until 2027-02-10.
+- The workflow job logs for Athlys1–Athlys6 contain no Node.js 20 deprecation/forced-runtime warning.
+- All six PRs remain open and draft. No merge, release, or production deployment occurred.
+
+After those component checks passed, the immutable component lock was refreshed to the latest verified feature-branch SHAs for Athlys2–Athlys6. The lock-refresh commit is `946adabc16d5116402ba1a8996997d37f31282f3`; a consolidated run against this refreshed lock remains the final follow-up verification.
