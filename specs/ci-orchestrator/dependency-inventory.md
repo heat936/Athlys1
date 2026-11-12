@@ -16,9 +16,9 @@ All workflow action references in the six-repository CI slice are pinned to full
 
 | Action | Version label | Immutable commit |
 |---|---|---|
-| actions/checkout | v4 | 11d5960a326750d5838078e36cf38b85af677262 |
-| actions/setup-node | v4 | 49933ea5288caeca8642d1e84afbd3f7d6820020 |
-| actions/upload-artifact | v4 | ea165f8d65b6e75b540449e92b4886f43607fa02 |
+| actions/checkout | v7.0.1 (Node 24) | 3d3c42e5aac5ba805825da76410c181273ba90b1 |
+| actions/setup-node | v7.1.0 (Node 24) | 949feb2413d6458794dcd2491c4babbbce0c15c1 |
+| actions/upload-artifact | v7.0.2 (Node 24) | cf430e030ddbb5b0abf93d22962f4752f3646cd9 |
 | astral-sh/setup-uv | v5.4.2 | d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 |
 
 The official Spec Kit CLI is installed from the upstream `github/spec-kit` repository at commit `979b0a3c1277283371c9901ad0eed04b64a99997`.
@@ -26,7 +26,7 @@ The official Spec Kit CLI is installed from the upstream `github/spec-kit` repos
 ## Evidence and limitations
 
 - `source-inventory.cdx.json` is a CycloneDX 1.6 source-tree inventory. It hashes each file and each repository snapshot at an immutable commit.
-- The action pins above make the action entrypoints immutable. They do not enumerate the transitive packages bundled inside each action.
+- The action pins above make the action entrypoints immutable. The checkout v7.0.1, setup-node v7.1.0, and upload-artifact v7.0.2 action metadata each declare Node.js 24. setup-uv v5.4.2 is a composite action. These pins do not enumerate the transitive packages bundled inside each action.
 - Ubuntu runner image contents, GitHub Actions runner internals, hosted tool cache, and transitive action package closure are outside the current CycloneDX source-tree inventory.
 - Therefore neither the source-tree inventory nor this document should be described as a dependency-complete build SBOM or release SBOM.
 - A release-grade SBOM requires a separately defined build boundary and collection of the actual build environment and transitive action/tool dependencies.
