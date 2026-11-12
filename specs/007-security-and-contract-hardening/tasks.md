@@ -19,7 +19,8 @@
 
 ## Remaining security and release gates
 - [ ] Add full dependency/static/security scanning where applicable.
-- [ ] Generate and validate SBOMs from the actual build inputs (not only test fixtures).
+- [x] Generate a CycloneDX 1.6 six-repository source-tree inventory from immutable checked-out revisions; explicitly label it as source inventory, not a dependency-complete or release-build SBOM.
+- [ ] Generate and validate dependency-complete SBOMs from actual release build inputs.
 - [ ] Provision protected signing trust and signed build attestations.
 - [ ] Select and provision a second independent CI provider.
 - [ ] Establish approved durable evidence storage and retention controls.
