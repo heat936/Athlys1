@@ -55,7 +55,7 @@ Athlys1 and Athlys2 are public; Athlys3–Athlys6 are private. The workflow runs
 - `actions/upload-artifact` v7.0.2 — `cf430e030ddbb5b0abf93d22962f4752f3646cd9` (Node 24).
 - `astral-sh/setup-uv` v10.3.3 — `68559e99cc807c1eb7e9238fd43a15bba460eec2` (Node 24; replaces the previously pinned Node 20 action).
 - `actions/attest` v4.2.2 — `1e69f48acb82d1966a394da916b4c1698aa569d6` (Node 24).
-- Syft v1.57.1 — release binary SHA-256 `2355758c1142982a67b309604c5d75effdbe638a57c771979ea8fd1a16656abc`; source release commit `a0c0d3890a9d79421c403e8fcadec50a2e55bf21`.
+- Syft v1.57.1 — release binary SHA-256 `bf52519eb57f675d47c07d43213cb6dff6449f3d6d1147ff6701ed91f44eef0c`; source release commit `a0c0d3890a9d79421c403e8fcadec50a2e55bf21`.
 - Spec Kit CLI source — `979b0a3c1277283371c9901ad0eed04b64a99997`.
 
 ## 6. Execution plan
