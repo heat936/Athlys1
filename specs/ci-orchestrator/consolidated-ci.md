@@ -89,7 +89,7 @@ Commit: `2a330424c38d0de23f1428233e2c0ea736dd2781`
 - CycloneDX 1.6 source inventory includes six components. SHA-256 checksums for all seven TAP files and the inventory were independently recomputed from the downloaded artifact and all matched.
 - Evidence artifacts: `athlys-six-component-evidence-68077476b831e4a3dcd975a550ddb11cf7bfa9b9` and `athlys1-test-evidence-68077476b831e4a3dcd975a550ddb11cf7bfa9b9`, retained until 2027-02-10.
 
-The run emitted a non-fatal GitHub warning that the pinned checkout/setup-node/upload-artifact action commits target Node.js 20 and are being forced to Node.js 24 on the hosted runner. Plan a controlled migration to Node-24-compatible action releases, re-pin their full commit SHAs, and rerun CI. The current run itself completed successfully.
+The initial consolidated run emitted a non-fatal warning because the then-pinned checkout/setup-node/upload-artifact actions targeted Node.js 20. This was resolved by the Node.js 24 action migration recorded below; the updated action workflows have now passed their component and consolidated test runs without that warning.
 
 This verifies the six-component test/integration gate, not a production build, dependency-complete release SBOM, signed provenance, branch protection, merge, or deployment.
 
@@ -108,3 +108,20 @@ The three Node action pins were resolved from official upstream Git refs and the
 Specification and acceptance criteria: `specs/ci-orchestrator/node24-action-runtime-migration.md`.
 
 Status: workflow changes applied to the six-repository feature branch and documented. The updated component and consolidated workflow runs are the remaining verification gate. No merge, release, or production deployment was performed.
+
+
+### First post-migration consolidated verification
+
+Run #91: https://github.com/heat936/Athlys1/actions/runs/43228810368  
+Commit: `8400e4807c1a6da43351db375d67c597ec3913d7`
+
+- Both jobs succeeded: Athlys1 orchestrator tests and the six-component suite.
+- Athlys1: 23/23 orchestrator tests.
+- Six component suites: Athlys1 27/27, Athlys2 4/4, Athlys3 5/5, Athlys4 6/6, Athlys5 5/5, Athlys6 6/6 — 53 distinct tests passed. The separate cross-component TAP file repeats four tests already discovered in Athlys1's suite and is not double-counted.
+- All five private repository checkouts succeeded.
+- CycloneDX 1.6 inventory contains six repositories. All eight SHA-256 entries in the evidence artifact were independently recomputed and matched.
+- Artifact ZIP digest: `sha256:aac7cc05020df03d5a54ce4f77336ff314251961b242383047813e713594a405`.
+- No Node.js 20 deprecation/forced-runtime warning was found in the six updated workflow job logs.
+- After the component checks passed, `component-lock.json` was refreshed to the latest verified branch SHAs for Athlys2–Athlys6. A further consolidated run against the refreshed lock is the remaining verification of that lock-only change.
+
+All six PRs remain open and draft. No merge, production deployment, or release publication occurred.
