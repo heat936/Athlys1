@@ -40,13 +40,14 @@ jobs:
           node-version: "22"
       - name: Run component tests
         run: node --test
-      - name: Run full Spec Kit CLI audit only on manual request
+      - name: Set up uv for the manual CLI audit
+        if: github.event_name == 'workflow_dispatch'
+        uses: astral-sh/setup-uv@v5
+      - name: Install and audit the official Spec Kit CLI
         if: github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
-          python -m pip install --user uv
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/uv" tool install specify-cli --from git+https://github.com/github/spec-kit.git@979b0a3c1277283371c9901ad0eed04b64a99997
+          uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@979b0a3c1277283371c9901ad0eed04b64a99997
           specify --version
           specify check
           specify --help
