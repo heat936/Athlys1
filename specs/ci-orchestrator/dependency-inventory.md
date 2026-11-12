@@ -40,3 +40,10 @@ The official Spec Kit CLI is installed from the upstream `github/spec-kit` repos
 4. Re-run component CI after changing action references.
 5. Generate both the internal source inventory and the sanitized public CI SBOM; verify the SBOM and attestations.
 6. Keep any production binary/container/release SBOM claim blocked until an actual production build boundary and its dependencies are captured.
+
+
+## Verified SBOM and attestations
+
+The first successful supply-chain run is [Athlys1 Actions run 43232033947](https://github.com/heat936/Athlys1/actions/runs/43232033947). It produced CycloneDX 1.6 with 2,281 components and 307 dependency records, including the observed Ubuntu dpkg package inventory, Spec Kit Python environment and pinned action source dependency data.
+
+The sanitized SBOM and `spec-kit-uv.lock` are in artifact `13950936567`; the archive digest is `sha256:f4ec52ec30b74936bca8df4f82b9ef50e1f04478ec39972188d46cb609a7dac4`. SLSA provenance attestation `66718907` and CycloneDX SBOM attestation `66718927` were signed and verified. The source archive digest is `sha256:b82c5bdaebe9947d12f71c209c50999608a27c009689ddc1ff345c95e4dcd513`; the archive itself remains runner-local.
