@@ -136,7 +136,8 @@ jobs:
             printf '%s %s\n' "$repo" "$sha" | tee -a evidence/component-manifest.txt
             (cd "components/$repo" && node --test --test-reporter=tap > "../../evidence/$repo.tap")
           done
-          (cd evidence && sha256sum *.tap > SHA256SUMS)
+          node components/Athlys1/src/source-inventory.mjs --root components --manifest evidence/component-manifest.txt --output evidence/source-inventory.cdx.json
+          (cd evidence && sha256sum *.tap source-inventory.cdx.json > SHA256SUMS)
       - name: Publish consolidated summary
         if: always()
         shell: bash
