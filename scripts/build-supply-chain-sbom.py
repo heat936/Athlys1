@@ -318,13 +318,13 @@ def main() -> None:
         }],
     }
 
-    # Final privacy guard: no private repository identity or 40-character revision may escape.
+    # Final privacy guard: no private repository identity or private source revision may escape.
     serialized = json.dumps(bom, ensure_ascii=False, sort_keys=True)
-    if re.search(r"heat936/Athlys[1-6]|\bAthlys[1-6]\b|\b[0-9a-f]{40}\b", serialized):
-        raise ValueError("Privacy guard failed: private repository identifier or commit SHA found in public SBOM")
+    if re.search(r"heat936/Athlys[1-6]|\bAthlys[1-6]\b", serialized) or any(sha in serialized for sha in private_commits):
+        raise ValueError("Privacy guard failed: private repository identifier or source commit found in public SBOM")
     if len({c.get("bom-ref") for c in bom["components"]}) != len(bom["components"]):
         raise ValueError("Duplicate bom-ref values")
-    bom_refs = {c.get("bom-ref") for c in bom["components"]}
+    bom_refs = {c.get("bom-ref") for c in bom["components"]} | {root_ref}
     for dep in bom["dependencies"]:
         if dep["ref"] not in bom_refs or any(target not in bom_refs for target in dep["dependsOn"]):
             raise ValueError("Unresolved dependency reference")
