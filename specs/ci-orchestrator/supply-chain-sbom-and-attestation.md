@@ -105,7 +105,7 @@ Result: **success** (all workflow steps, both attestations, both CLI verificatio
 - Syft v1.57.1 binary SHA-256 was verified against the official Linux amd64 release asset digest before execution.
 - SBOM: CycloneDX 1.6; 2,281 components; 307 dependency records; 1,213 Ubuntu dpkg packages and 198 Python packages are among the catalogued components. All dependency references resolve and all component `bom-ref` values are unique.
 - The public SBOM contains no private repository identifiers or private source commit SHAs. The full source manifest and source archive remained runner-local.
-- The Spec Kit resolved lock is included in the public artifact as `spec-kit-uv.lock` (225,185 bytes); its SHA-256 is `39ad5cf0b2f948c019e6465e08c90c980cccb8bcdbcedd903e446a87bf8161bc`. It is not yet committed to the repository, so future runs currently resolve a fresh lock.
+- The Spec Kit resolved lock is included in the public artifact as `spec-kit-uv.lock` (225,185 bytes), SHA-256 `39ad5cf0b2f948c019e6465e08c90c980cccb8bcdbcedd903e446a87bf8161bc`. The same digest is now committed as `specs/ci-orchestrator/spec-kit-uv.lock.sha256`; the workflow rejects any newly resolved lock whose digest differs.
 - Public artifact: `athlys-public-supply-chain-sbom-f77e65348e1faa2e30e1dd3129ce6d837a783192`, artifact ID `13950936567`, artifact digest `sha256:f4ec52ec30b74936bca8df4f82b9ef50e1f04478ec39972188d46cb609a7dac4`, retained until 2027-02-10.
 - Source archive digest (archive not uploaded): `sha256:b82c5bdaebe9947d12f71c209c50999608a27c009689ddc1ff345c95e4dcd513`.
 - SLSA provenance attestation: [66718907](https://github.com/heat936/Athlys1/attestations/66718907); Sigstore Rekor entry 3833651485.
