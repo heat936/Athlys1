@@ -21,13 +21,15 @@ async function listFiles(root, current = root) {
 export async function buildSourceInventory({ root, manifest, timestamp = new Date().toISOString() }) {
   if (!Array.isArray(manifest) || manifest.length !== 6) throw new TypeError("manifest must contain exactly six repository revisions");
   const seen = new Set();
-  const components = [];
-  for (const item of [...manifest].sort((a, b) => a.repository.localeCompare(b.repository))) {
-    if (!/^heat936\/Athlys[1-6]$/.test(item.repository) || !/^[a-f0-9]{40}$/.test(item.commitSha)) {
+  for (const item of manifest) {
+    if (!item || !/^heat936\\/Athlys[1-6]$/.test(item.repository ?? "") || !/^[a-f0-9]{40}$/.test(item.commitSha ?? "")) {
       throw new TypeError("repository identity or immutable commit SHA is invalid");
     }
     if (seen.has(item.repository)) throw new TypeError("duplicate repository in manifest");
     seen.add(item.repository);
+  }
+  const components = [];
+  for (const item of [...manifest].sort((a, b) => a.repository.localeCompare(b.repository))) {
     const repoName = item.repository.split("/")[1];
     const repoRoot = path.join(root, repoName);
     const files = await listFiles(repoRoot);
