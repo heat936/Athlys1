@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: "22"
       - name: Run orchestrator tests
-        run: node --test --test-reporter=tap > test-results.tap
+        run: node --test --test-reporter=tap | tee test-results.tap
       - name: Publish orchestrator test summary
         if: always()
         shell: bash
