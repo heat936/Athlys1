@@ -1,0 +1,46 @@
+name: Spec Kit and component verification
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Spec Kit CLI and Node tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install official GitHub Spec Kit CLI
+        run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+      - name: Verify Spec Kit CLI
+        run: |
+          specify --version
+          specify check
+          specify --help
+      - name: Execute component tests (fresh run)
+        run: node --test
+      - name: Record source identity
+        run: |
+          printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+          printf 'commit=%s\n' "$GITHUB_SHA"
+          printf 'runner=%s\n' "$ImageOS $ImageVersion"
