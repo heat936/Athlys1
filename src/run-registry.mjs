@@ -11,7 +11,7 @@ const ALLOWLIST = new Map([
 ]);
 const TERMINAL = new Set(["passed", "failed", "startup_failure", "build_failure", "timeout", "cancelled", "runner_lost"]);
 const RETRYABLE = new Set(["startup_failure", "timeout", "runner_lost"]);
-const CHECK_STATES = new Set(["passed", "failed", "startup_failure", "build_failure", "timeout", "cancelled", "cached", "skipped", "unavailable"]);
+const CHECK_STATES = new Set(["passed", "failed", "startup_failure", "build_failure", "timeout", "cancelled", "runner_lost", "cached", "skipped", "unavailable"]);
 const MAX_ATTEMPTS = 3;
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
