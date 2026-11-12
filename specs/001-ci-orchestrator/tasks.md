@@ -1,18 +1,24 @@
 # CI Orchestrator — Tasks
 
-- [ ] Inspect current repository instructions, default branch, package/toolchain conventions, and existing workflows.
-- [ ] Confirm Spec Kit CLI version and supported commands in the execution environment.
-- [ ] Define JSON/schema contracts and compatibility policy.
-- [ ] Define threat model, permissions, secrets handling, and network policy.
-- [ ] Implement a minimal component vertical slice.
-- [ ] Add unit and contract tests for acceptance criteria.
-- [ ] Add failure-injection tests for relevant failure modes.
-- [ ] Add structured logs and evidence manifest.
-- [ ] Run formatting, lint, static analysis, tests, security checks, and build where applicable.
-- [ ] Verify exact source SHA on an independent runner.
-- [ ] Review final diff and document limitations, rollback, and approval gates.
+## Completed in the initial vertical slice
+- [x] Inspect repository baseline, default branch, and existing instructions.
+- [x] Install and verify the official Spec Kit CLI in CI; pin its upstream source commit.
+- [x] Inspect current `specify init` syntax before use.
+- [x] Smoke-test official Spec Kit scaffolding in an isolated temporary directory without overwriting repository files.
+- [x] Define the component's initial versioned contract and acceptance behavior.
+- [x] Implement the component's first executable vertical slice.
+- [x] Add deterministic Node.js tests for core behavior and edge cases.
+- [x] Execute fresh tests on Ubuntu 24.04 / Node 22: 5/5 passed.
 
-## Dependencies
-- Shared run/evidence contract owned by Athlys1 (orchestrator).
-- Runner capability contract owned by Athlys2.
-- Cross-component integration verification owned by Athlys6.
+## Remaining before component closure
+- [ ] Complete security/threat-model review and document all trust boundaries.
+- [ ] Add full static analysis, formatting/lint, dependency and security checks as appropriate.
+- [ ] Add structured evidence export and durable retention; sign attestations where required.
+- [ ] Validate exact-SHA execution on a second independent runner provider.
+- [ ] Complete cross-repository contract and dispatch integration tests.
+- [ ] Review final diff, document rollback, and open a draft pull request for human review.
+
+## Constraints
+- No production secrets in source control or logs.
+- No automatic merge, deployment, release publication, DNS change, or database migration.
+- A cached or skipped check is never reported as a fresh pass.
