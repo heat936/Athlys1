@@ -22,3 +22,9 @@
 - No production secrets in source control or logs.
 - No automatic merge, deployment, release publication, DNS change, or database migration.
 - A cached or skipped check is never reported as a fresh pass.
+
+
+## Security and evidence hardening (2026-11-12)
+- [x] Add SHA-256 evidence-manifest verification and detect post-generation tampering.
+- [x] Add deterministic tests for valid and tampered manifests.
+- [ ] Confirm the updated component gate passes on the latest PR head.
