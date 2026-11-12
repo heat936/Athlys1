@@ -1,6 +1,6 @@
 # Supply-chain SBOM and signed provenance
 
-Status: implementation in progress on `spec/ci-independence-bootstrap`  
+Status: implemented and verified on `spec/ci-independence-bootstrap`  
 Date: 2026-11-12  
 Owner: Athlys CI orchestrator (single accountable integration owner)
 
@@ -91,3 +91,32 @@ Athlys1 and Athlys2 are public; Athlys3–Athlys6 are private. The workflow runs
 - Spec Kit upstream currently has no committed `uv.lock`; the resolved Python dependency versions are captured per run. Until a reviewed lock is committed, the Spec Kit dependency environment is traceable but not fully reproducible across time.
 - Syft catalogs package metadata and lockfiles it recognizes. Bundled JavaScript dependencies not separately represented by package manifests/lockfiles may require additional binary-level analysis.
 - Ubuntu hosted-runner image is mutable; the exact image and installed package inventory are captured per run, but the GitHub-hosted runner image itself is not pinned.
+
+
+## 9. Verified execution evidence
+
+Run: [Athlys supply-chain SBOM and signed attestations #?](https://github.com/heat936/Athlys1/actions/runs/43232033947)  
+Commit: `f77e65348e1faa2e30e1dd3129ce6d837a783192`  
+Result: **success** (all workflow steps, both attestations, both CLI verification commands and artifact upload).
+
+- Consolidated CI for the same commit: [run](https://github.com/heat936/Athlys1/actions/runs/43232043419) — **success**.
+- All five private component checkouts succeeded at the immutable commits in `component-lock.json`.
+- All six component test suites passed: 53 distinct tests, zero failures (the four cross-component tests are already included in Athlys1's recursive suite).
+- Syft v1.57.1 binary SHA-256 was verified against the official Linux amd64 release asset digest before execution.
+- SBOM: CycloneDX 1.6; 2,281 components; 307 dependency records; 1,213 Ubuntu dpkg packages and 198 Python packages are among the catalogued components. All dependency references resolve and all component `bom-ref` values are unique.
+- The public SBOM contains no private repository identifiers or private source commit SHAs. The full source manifest and source archive remained runner-local.
+- The Spec Kit resolved lock is included in the public artifact as `spec-kit-uv.lock` (225,185 bytes); its SHA-256 is `39ad5cf0b2f948c019e6465e08c90c980cccb8bcdbcedd903e446a87bf8161bc`. It is not yet committed to the repository, so future runs currently resolve a fresh lock.
+- Public artifact: `athlys-public-supply-chain-sbom-f77e65348e1faa2e30e1dd3129ce6d837a783192`, artifact ID `13950936567`, artifact digest `sha256:f4ec52ec30b74936bca8df4f82b9ef50e1f04478ec39972188d46cb609a7dac4`, retained until 2027-02-10.
+- Source archive digest (archive not uploaded): `sha256:b82c5bdaebe9947d12f71c209c50999608a27c009689ddc1ff345c95e4dcd513`.
+- SLSA provenance attestation: [66718907](https://github.com/heat936/Athlys1/attestations/66718907); Sigstore Rekor entry 3833651485.
+- CycloneDX SBOM attestation: [66718927](https://github.com/heat936/Athlys1/attestations/66718927); Sigstore Rekor entry 3833651757.
+- Both attestations were signed through the Sigstore Public Good instance and uploaded to GitHub. The workflow's `gh attestation verify` commands succeeded for the SLSA provenance and `https://cyclonedx.org/bom` predicate.
+- The setup-uv cache warning was removed by disabling cache for the ephemeral lock-generation job.
+
+### Internal companion
+
+A private enriched copy of the SBOM can map opaque source components to repository names and exact commits. It is not uploaded to GitHub and is not itself directly signed; the signatures cover the sanitized public SBOM and source archive digest. Do not publish the internal companion.
+
+### Final governance state
+
+All six PRs remain open and draft. No merge, release, production deployment, secret mutation or Supabase change occurred. The public SBOM is a CI source-bundle/build-environment inventory, not a production binary/container/release SBOM.
