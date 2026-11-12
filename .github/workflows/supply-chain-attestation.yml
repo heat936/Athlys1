@@ -136,6 +136,7 @@ jobs:
         with:
           version: "0.13.7"
           python-version: "3.12"
+          enable-cache: false
 
       - name: Download and verify pinned Syft binary
         shell: bash
@@ -210,6 +211,7 @@ jobs:
           test -d "$tmpdir/.specify"
           uv pip freeze --python "$GITHUB_WORKSPACE/tool-sources/spec-kit/.venv/bin/python" > "$GITHUB_WORKSPACE/evidence/internal/spec-kit-python-freeze.txt"
           cp uv.lock "$GITHUB_WORKSPACE/evidence/internal/spec-kit-uv.lock"
+          cp uv.lock "$GITHUB_WORKSPACE/evidence/public/spec-kit-uv.lock"
 
       - name: Inventory source, actions, runner and build environment
         shell: bash
@@ -281,7 +283,7 @@ jobs:
             --private-commits evidence/internal/component-manifest.txt \
             --output evidence/public/athlys-supply-chain.cdx.json
           jq -e '.bomFormat == "CycloneDX" and .specVersion == "1.6" and (.components | length > 6)' evidence/public/athlys-supply-chain.cdx.json > /dev/null
-          sha256sum evidence/public/athlys-supply-chain.cdx.json > evidence/public/SHA256SUMS
+          sha256sum evidence/public/athlys-supply-chain.cdx.json evidence/public/spec-kit-uv.lock > evidence/public/SHA256SUMS
           sha256sum evidence/internal/athlys-source-snapshot.tar.gz > evidence/internal/SOURCE-SNAPSHOT.sha256
           echo "Source bundle SHA-256: $source_digest" >> "$GITHUB_STEP_SUMMARY"
           echo "Sanitized CycloneDX 1.6 SBOM generated; private repository identifiers and source revisions were redacted." >> "$GITHUB_STEP_SUMMARY"
@@ -326,6 +328,7 @@ jobs:
           name: athlys-public-supply-chain-sbom-${{ github.sha }}
           path: |
             evidence/public/athlys-supply-chain.cdx.json
+            evidence/public/spec-kit-uv.lock
             evidence/public/SHA256SUMS
           if-no-files-found: error
           retention-days: 90
