@@ -19,11 +19,11 @@ The file `specs/ci-orchestrator/component-lock.json` records the exact tested co
 After a component PR changes, update its lock entry only after its own PR workflow succeeds. The consolidated workflow then provides a reproducible integration check over that exact five-repository source set plus the Athlys1 PR head (or dispatch commit).
 
 ## Required one-time configuration for integrated runner
-The initial integrated attempt showed that the default Athlys1 `GITHUB_TOKEN` cannot read at least Athlys3 (GitHub returned “Repository not found”). The repositories must not be made public to work around this.
+The initial integrated attempt showed that the default Athlys1 `GITHUB_TOKEN` cannot read at least Athlys3 (GitHub returned “Repository not found”). The private repositories `Athlys3`–`Athlys6` must not be made public to work around this.
 
 In Athlys1 repository settings:
-1. Create a fine-grained token restricted to exactly `Athlys1` through `Athlys6`.
-2. Grant only repository **Contents: Read-only** (and mandatory Metadata read permission).
+1. Create a fine-grained token restricted to the four private repositories `Athlys3`, `Athlys4`, `Athlys5`, and `Athlys6`. `Athlys1` and `Athlys2` are public and do not require private-repository access.
+2. Grant only repository **Contents: Read-only** (plus GitHub's mandatory Metadata read permission).
 3. Save it as Actions secret `ATHLYS_READ_TOKEN`.
 4. Add Actions repository variable `ATHLYS_CI_READY` with value `true` only after the secret is saved.
 
