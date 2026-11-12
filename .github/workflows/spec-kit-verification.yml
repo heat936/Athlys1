@@ -4,17 +4,6 @@ on:
   pull_request:
     branches: ["main"]
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "src/**"
-      - "test/**"
-      - "tests/**"
-      - "specs/**"
-      - ".specify/**"
-      - ".github/workflows/**"
-      - "package.json"
-      - "package-lock.json"
-      - "pnpm-lock.yaml"
-      - "README.md"
   workflow_dispatch:
 
 permissions:
@@ -39,28 +28,57 @@ jobs:
         with:
           node-version: "22"
       - name: Run orchestrator tests
-        run: node --test
+        run: node --test --test-reporter=tap > test-results.tap
+      - name: Publish orchestrator test summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f test-results.tap ]; then
+            echo '## Athlys1 orchestrator test evidence' >> "$GITHUB_STEP_SUMMARY"
+            cat test-results.tap >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '## Athlys1 test evidence unavailable: test process did not produce output.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload orchestrator test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: athlys1-test-evidence-${{ github.sha }}
+          path: test-results.tap
+          if-no-files-found: warn
+          retention-days: 14
 
   consolidated-tests:
     needs: orchestrator-tests
     if: ${{ vars.ATHLYS_CI_READY == 'true' }}
     name: Six-component test suite
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - name: Checkout Athlys1
         uses: actions/checkout@v4
         with:
           repository: heat936/Athlys1
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'spec/ci-independence-bootstrap' }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: components/Athlys1
-          token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
+      - name: Read immutable component lock
+        id: lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="components/Athlys1/specs/ci-orchestrator/component-lock.json"
+          test -s "$manifest"
+          for repo in Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            sha="$(jq -er ".components.${repo}.commit" "$manifest")"
+            [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+            echo "${repo,,}=$sha" >> "$GITHUB_OUTPUT"
+          done
       - name: Checkout Athlys2
         uses: actions/checkout@v4
         with:
           repository: heat936/Athlys2
-          ref: spec/ci-independence-bootstrap
+          ref: ${{ steps.lock.outputs.athlys2 }}
           path: components/Athlys2
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
@@ -68,7 +86,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: heat936/Athlys3
-          ref: spec/ci-independence-bootstrap
+          ref: ${{ steps.lock.outputs.athlys3 }}
           path: components/Athlys3
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
@@ -76,7 +94,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: heat936/Athlys4
-          ref: spec/ci-independence-bootstrap
+          ref: ${{ steps.lock.outputs.athlys4 }}
           path: components/Athlys4
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
@@ -84,7 +102,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: heat936/Athlys5
-          ref: spec/ci-independence-bootstrap
+          ref: ${{ steps.lock.outputs.athlys5 }}
           path: components/Athlys5
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
@@ -92,7 +110,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: heat936/Athlys6
-          ref: spec/ci-independence-bootstrap
+          ref: ${{ steps.lock.outputs.athlys6 }}
           path: components/Athlys6
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
@@ -100,23 +118,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Run all component tests on one runner
+      - name: Run all component tests and record source identities
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p evidence
+          : > evidence/component-manifest.txt
           for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
-            echo "::group::${repo} — source identity"
-            git -C "components/${repo}" rev-parse HEAD
-            echo "::endgroup::"
-            echo "::group::${repo} — Node tests"
-            (cd "components/${repo}" && node --test)
-            echo "::endgroup::"
+            sha="$(git -C "components/$repo" rev-parse HEAD)"
+            printf '%s %s\n' "$repo" "$sha" | tee -a evidence/component-manifest.txt
+            (cd "components/$repo" && node --test --test-reporter=tap > "../../evidence/$repo.tap")
           done
-      - name: Record consolidated source manifest
+      - name: Publish consolidated summary
+        if: always()
         shell: bash
         run: |
-          set -euo pipefail
-          for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
-            printf '%s ' "$repo"
-            git -C "components/$repo" rev-parse HEAD
-          done
+          echo '## Consolidated component evidence' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f evidence/component-manifest.txt ]; then
+            cat evidence/component-manifest.txt >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Component manifest was not produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload consolidated evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: athlys-six-component-evidence-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 30
