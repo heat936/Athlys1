@@ -30,9 +30,9 @@ export function aggregateResults(run, results) {
     checks.some(c=>c.status==="cached"||c.fresh!==true)?"cached_only":"success";
   return {runId:run.runId,repository:run.repository,commitSha:run.commitSha,status,complete:checks.every(c=>c.status==="passed"&&c.fresh===true),checks};
 }
-export function createEvidenceManifest(run, results, runner) {
+function canonicalize(value) {\n  if (Array.isArray(value)) return value.map(canonicalize);\n  if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalize(value[key])]));\n  return value;\n}\nexport function createEvidenceManifest(run, results, runner) {
   const aggregate=aggregateResults(run,results);
   const payload={schemaVersion:"1.0",run:{runId:run.runId,repository:run.repository,ref:run.ref,commitSha:run.commitSha,policyVersion:run.policyVersion},runner,aggregate};
-  const canonical=JSON.stringify(payload,Object.keys(payload).sort());
+  const canonical=JSON.stringify(canonicalize(payload));
   return {...payload,integrity:{algorithm:"sha256",digest:createHash("sha256").update(canonical).digest("hex"),signed:false}};
 }
