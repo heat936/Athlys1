@@ -19,7 +19,8 @@ All workflow action references in the six-repository CI slice are pinned to full
 | actions/checkout | v7.0.1 (Node 24) | 3d3c42e5aac5ba805825da76410c181273ba90b1 |
 | actions/setup-node | v7.1.0 (Node 24) | 949feb2413d6458794dcd2491c4babbbce0c15c1 |
 | actions/upload-artifact | v7.0.2 (Node 24) | cf430e030ddbb5b0abf93d22962f4752f3646cd9 |
-| astral-sh/setup-uv | v5.4.2 | d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 |
+| astral-sh/setup-uv | v10.3.3 (Node 24) | 68559e99cc807c1eb7e9238fd43a15bba460eec2 |
+| actions/attest | v4.2.2 (Node 24) | 1e69f48acb82d1966a394da916b4c1698aa569d6 |
 
 The official Spec Kit CLI is installed from the upstream `github/spec-kit` repository at commit `979b0a3c1277283371c9901ad0eed04b64a99997`.
 
@@ -37,5 +38,5 @@ The official Spec Kit CLI is installed from the upstream `github/spec-kit` repos
 2. Confirm there are no untracked package-manager manifests or generated dependency directories included in the source inventory.
 3. Resolve each action tag in its official upstream repository and pin the exact 40-character commit SHA.
 4. Re-run component CI after changing action references.
-5. Generate the CycloneDX source inventory only from the six immutable checkouts and retain its SHA-256 evidence.
-6. Keep the release-SBOM claim blocked until the full build boundary and transitive dependency closure are captured.
+5. Generate both the internal source inventory and the sanitized public CI SBOM; verify the SBOM and attestations.
+6. Keep any production binary/container/release SBOM claim blocked until an actual production build boundary and its dependencies are captured.
