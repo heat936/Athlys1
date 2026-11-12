@@ -283,7 +283,7 @@ jobs:
             --private-commits evidence/internal/component-manifest.txt \
             --output evidence/public/athlys-supply-chain.cdx.json
           jq -e '.bomFormat == "CycloneDX" and .specVersion == "1.6" and (.components | length > 6)' evidence/public/athlys-supply-chain.cdx.json > /dev/null
-          sha256sum evidence/public/athlys-supply-chain.cdx.json evidence/public/spec-kit-uv.lock > evidence/public/SHA256SUMS
+          (cd evidence/public && sha256sum athlys-supply-chain.cdx.json spec-kit-uv.lock > SHA256SUMS)
           sha256sum evidence/internal/athlys-source-snapshot.tar.gz > evidence/internal/SOURCE-SNAPSHOT.sha256
           echo "Source bundle SHA-256: $source_digest" >> "$GITHUB_STEP_SUMMARY"
           echo "Sanitized CycloneDX 1.6 SBOM generated; private repository identifiers and source revisions were redacted." >> "$GITHUB_STEP_SUMMARY"
