@@ -1,4 +1,4 @@
-name: Fast PR verification and manual Spec Kit audit
+name: Athlys — consolidated CI
 
 on:
   pull_request:
@@ -21,44 +21,78 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: athlys-consolidated-ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Fast Node tests
+  consolidated-tests:
+    name: Six-component test suite
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
-      - name: Checkout immutable source
+      - name: Checkout Athlys1
         uses: actions/checkout@v4
         with:
+          repository: heat936/Athlys1
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'spec/ci-independence-bootstrap' }}
+          path: components/Athlys1
           persist-credentials: false
-      - name: Set up Node
+      - name: Checkout Athlys2
+        uses: actions/checkout@v4
+        with:
+          repository: heat936/Athlys2
+          ref: spec/ci-independence-bootstrap
+          path: components/Athlys2
+          persist-credentials: false
+      - name: Checkout Athlys3
+        uses: actions/checkout@v4
+        with:
+          repository: heat936/Athlys3
+          ref: spec/ci-independence-bootstrap
+          path: components/Athlys3
+          persist-credentials: false
+      - name: Checkout Athlys4
+        uses: actions/checkout@v4
+        with:
+          repository: heat936/Athlys4
+          ref: spec/ci-independence-bootstrap
+          path: components/Athlys4
+          persist-credentials: false
+      - name: Checkout Athlys5
+        uses: actions/checkout@v4
+        with:
+          repository: heat936/Athlys5
+          ref: spec/ci-independence-bootstrap
+          path: components/Athlys5
+          persist-credentials: false
+      - name: Checkout Athlys6
+        uses: actions/checkout@v4
+        with:
+          repository: heat936/Athlys6
+          ref: spec/ci-independence-bootstrap
+          path: components/Athlys6
+          persist-credentials: false
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Run component tests
-        run: node --test
-      - name: Set up uv for the manual CLI audit
-        if: github.event_name == 'workflow_dispatch'
-        uses: astral-sh/setup-uv@v5
-      - name: Install and audit the official Spec Kit CLI
-        if: github.event_name == 'workflow_dispatch'
+      - name: Run all component tests on one runner
+        shell: bash
         run: |
           set -euo pipefail
-          uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@979b0a3c1277283371c9901ad0eed04b64a99997
-          specify --version
-          specify check
-          specify --help
-          specify init --help
-          tmpdir="$(mktemp -d)"
-          trap 'rm -rf "$tmpdir"' EXIT
-          cd "$tmpdir"
-          specify init . --non-interactive --ignore-agent-tools
-          test -d .specify
-          test -n "$(find .specify -maxdepth 3 -type f -print -quit)"
-      - name: Record source identity
+          for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            echo "::group::${repo} — source identity"
+            git -C "components/${repo}" rev-parse HEAD
+            echo "::endgroup::"
+            echo "::group::${repo} — Node tests"
+            (cd "components/${repo}" && node --test)
+            echo "::endgroup::"
+          done
+      - name: Record consolidated source manifest
+        shell: bash
         run: |
-          printf 'repository=%s\n' "$GITHUB_REPOSITORY"
-          printf 'commit=%s\n' "$GITHUB_SHA"
+          set -euo pipefail
+          for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            printf '%s ' "$repo"
+            git -C "components/$repo" rev-parse HEAD
+          done
