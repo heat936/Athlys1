@@ -1,10 +1,11 @@
 import test from "node:test";import assert from "node:assert/strict";
-import {validateRun,aggregateResults,createEvidenceManifest} from "../src/orchestrator.mjs";
+import {validateRun,aggregateResults,createEvidenceManifest,verifyEvidenceManifest} from "../src/orchestrator.mjs";
 const run={runId:"r-1",repository:"heat936/Athlys1",commitSha:"a".repeat(40),ref:"refs/heads/main",policyVersion:"1",requiredChecks:["unit","lint"]};
 test("rejects mutable or incomplete source identity",()=>{assert.ok(validateRun({...run,commitSha:"main"}).length>0);});
 test("missing checks never produce green",()=>{const a=aggregateResults(run,[{name:"unit",status:"passed",fresh:true}]);assert.equal(a.status,"incomplete");assert.equal(a.complete,false);});
 test("cached checks are not fresh success",()=>{const a=aggregateResults(run,[{name:"unit",status:"cached",fresh:false},{name:"lint",status:"passed",fresh:true}]);assert.equal(a.status,"cached_only");assert.equal(a.complete,false);});
-test("all fresh required checks produce success and evidence digest",()=>{const m=createEvidenceManifest(run,[{name:"unit",status:"passed",fresh:true},{name:"lint",status:"passed",fresh:true}],{image:"ubuntu-24.04"});assert.equal(m.aggregate.status,"success");assert.match(m.integrity.digest,/^[a-f0-9]{64}$/);assert.equal(m.integrity.signed,false);});
+test("all fresh required checks produce success and evidence digest",()=>{const m=createEvidenceManifest(run,[{name:"unit",status:"passed",fresh:true},{name:"lint",status:"passed",fresh:true}],{image:"ubuntu-24.04"});assert.equal(m.aggregate.status,"success");assert.match(m.integrity.digest,/^[a-f0-9]{64}$/);assert.equal(m.integrity.signed,false);assert.equal(verifyEvidenceManifest(m).valid,true);});
+test("tampered evidence manifest is detected",()=>{const m=createEvidenceManifest(run,[{name:"unit",status:"passed",fresh:true},{name:"lint",status:"passed",fresh:true}],{image:"ubuntu-24.04"});m.runner.image="ubuntu-22.04";assert.equal(verifyEvidenceManifest(m).valid,false);});
 test("evidence digest covers nested values",()=>{const a=createEvidenceManifest(run,[{name:"unit",status:"passed",fresh:true}],{image:"ubuntu-24.04"});const b=createEvidenceManifest(run,[{name:"unit",status:"passed",fresh:true}],{image:"ubuntu-22.04"});assert.notEqual(a.integrity.digest,b.integrity.digest);});
 test("not-run checks remain incomplete",()=>{const a=aggregateResults(run,[{name:"unit",status:"not_run",fresh:false},{name:"lint",status:"passed",fresh:true}]);assert.equal(a.status,"incomplete");});
 test("rejects duplicate check results",()=>assert.throws(()=>aggregateResults(run,[{name:"unit",status:"passed",fresh:true},{name:"unit",status:"passed",fresh:true}]),/unique/));
