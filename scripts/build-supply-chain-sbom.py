@@ -141,6 +141,7 @@ def main() -> None:
     parser.add_argument("--dpkg", type=Path, required=True)
     parser.add_argument("--python-freeze", type=Path, required=True)
     parser.add_argument("--build-metadata", type=Path, required=True)
+    parser.add_argument("--private-commits", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -157,8 +158,6 @@ def main() -> None:
         "version": "1.0.0",
         "description": "Sanitized inventory of the six-component Athlys CI source bundle and its detected build-time dependencies.",
     }
-    add_component(components, root)
-
     for component in source_components(source_bom):
         add_component(components, component)
         dependencies.setdefault(root_ref, set()).add(component["bom-ref"])
@@ -268,7 +267,8 @@ def main() -> None:
         dependencies.setdefault(root_ref, set()).add(ref)
 
     # Drop dependency edges to components that the merged BOM does not contain.
-    known = set(components)
+    private_commits = {line.split()[1] for line in args.private_commits.read_text(encoding="utf-8").splitlines() if len(line.split()) == 2 and re.fullmatch(r"[0-9a-f]{40}", line.split()[1])}
+    known = set(components) | {root_ref}
     normalized_dependencies = []
     for ref, targets in sorted(dependencies.items()):
         if ref not in known:
@@ -307,6 +307,7 @@ def main() -> None:
                 {"name": "athlys:privacy", "value": "private repository identifiers, commit IDs, and source paths redacted"},
                 {"name": "athlys:completeness", "value": "incomplete by design: no production binary/container is built; undetected bundled dependencies and mutable hosted-runner internals may remain"},
                 {"name": "athlys:source-archive-uploaded", "value": "false"},
+                {"name": "athlys:source-archive-sha256", "value": metadata.get("source_archive_sha256", "not-recorded")},
             ],
         },
         "components": sorted(components.values(), key=lambda item: item.get("bom-ref", "")),
