@@ -28,7 +28,10 @@ jobs:
         with:
           node-version: "22"
       - name: Run orchestrator tests
-        run: node --test --test-reporter=tap | tee test-results.tap
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap | tee test-results.tap
       - name: Hash test evidence
         if: always()
         shell: bash
