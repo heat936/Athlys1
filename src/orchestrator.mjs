@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 const SHA = /^[a-f0-9]{40}$/i;
-export const TERMINAL = new Set(["passed","failed","startup_failure","build_failure","timeout","cancelled","cached","skipped","unavailable"]);
+export const TERMINAL = new Set(["passed","failed","startup_failure","build_failure","timeout","cancelled","cached","skipped","unavailable","not_run"]);
 export function validateRun(run) {
   const errors=[];
   if (!run || typeof run !== "object") return ["run must be an object"];
@@ -16,7 +16,7 @@ export function validateRun(run) {
 export function aggregateResults(run, results) {
   const errors=validateRun(run);
   if(errors.length) throw new TypeError(errors.join("; "));
-  const byName=new Map((results??[]).map(r=>[r.name,r]));
+  const incoming=results??[];\n  if(new Set(incoming.map(r=>r.name)).size!==incoming.length) throw new TypeError("result names must be unique");\n  const byName=new Map(incoming.map(r=>[r.name,r]));\n  const unexpected=[...byName.keys()].filter(name=>!run.requiredChecks.includes(name));\n  if(unexpected.length) throw new TypeError("unexpected result names: "+unexpected.join(", "));
   const checks=run.requiredChecks.map(name=>({name,...(byName.get(name)??{status:"unavailable",fresh:false,reason:"missing result"})}));
   const invalid=checks.filter(c=>!TERMINAL.has(c.status));
   if(invalid.length) throw new TypeError("unknown status for: "+invalid.map(x=>x.name).join(", "));
@@ -26,7 +26,7 @@ export function aggregateResults(run, results) {
     checks.some(c=>c.status==="timeout")?"timeout":
     checks.some(c=>c.status==="cancelled")?"cancelled":
     checks.some(c=>c.status==="unavailable")?"incomplete":
-    checks.some(c=>c.status==="skipped")?"incomplete":
+    checks.some(c=>c.status==="skipped"||c.status==="not_run")?"incomplete":
     checks.some(c=>c.status==="cached"||c.fresh!==true)?"cached_only":"success";
   return {runId:run.runId,repository:run.repository,commitSha:run.commitSha,status,complete:checks.every(c=>c.status==="passed"&&c.fresh===true),checks};
 }
