@@ -16,9 +16,11 @@ const targets = entries.map(([repository, component], i) => ({
 const makeRegistry = () => createRunRegistry({ runId: "arena-2026-11-12-01", policyVersion: "1", targets });
 const eventFor = (registry, index, attempt, status, eventId = `evt-${index}-${attempt}`) => {
   const target = registry.targets[index];
+  const checkStatus = status === "passed" ? "passed" : status;
   return {
     eventId, runId: registry.runId, repository: target.repository, component: target.component,
     commitSha: target.commitSha, attempt, status,
+    checks: target.requiredChecks.map((name) => ({ name, status: checkStatus, fresh: status === "passed" })),
     idempotencyKey: createEventIdempotencyKey({ runId: registry.runId, repository: target.repository, commitSha: target.commitSha, attempt })
   };
 };
@@ -54,6 +56,13 @@ test("rejects mismatched commit, run, component, and idempotency key", () => {
   assert.throws(() => applyRunEvent(registry, { ...eventFor(registry, 0, 1, "passed"), idempotencyKey: "bad" }), /idempotency/);
 });
 
+test("passed requires every required check to be fresh and green", () => {
+  const registry = makeRegistry();
+  const event = eventFor(registry, 0, 1, "passed");
+  event.checks[1] = { name: "contract", status: "cached", fresh: false };
+  assert.throws(() => applyRunEvent(registry, event), /freshly passed/);
+});
+
 test("retries only infrastructure failures and never exceeds three attempts", () => {
   let registry = makeRegistry();
   registry = applyRunEvent(registry, eventFor(registry, 0, 1, "timeout")).registry;
@@ -66,7 +75,9 @@ test("retries only infrastructure failures and never exceeds three attempts", ()
 test("does not retry product/test failures", () => {
   let registry = makeRegistry();
   registry = applyRunEvent(registry, eventFor(registry, 0, 1, "failed")).registry;
-  assert.throws(() => applyRunEvent(registry, eventFor(registry, 0, 2, "passed")), /already terminal|retry/);
+  const retry = applyRunEvent(registry, eventFor(registry, 0, 2, "passed"));
+  assert.equal(retry.accepted, false);
+  assert.equal(retry.reason, "target_already_terminal");
 });
 
 test("aggregates only six passed targets as success", () => {
