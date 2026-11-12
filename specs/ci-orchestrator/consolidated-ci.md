@@ -74,3 +74,21 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 ## Credential configuration re-check — 2026-11-12
 
 The repository owner reports that `ATHLYS_READ_TOKEN` and `ATHLYS_CI_READY=true` have now been configured in Athlys1. The next PR synchronization is used to verify this operationally: the live consolidated job must actually start, authenticate to Athlys2–Athlys6, and complete the six test suites. Configuration is not considered verified until that run succeeds. No credential value is stored in this repository or this document.
+
+
+## First live consolidated execution — 2026-11-12
+
+Run: [Athlys — consolidated CI #87](https://github.com/heat936/Athlys1/actions/runs/43228008056)  
+Commit: `2a330424c38d0de23f1428233e2c0ea736dd2781`
+
+- Both jobs completed successfully: Athlys1 orchestrator tests and the live six-component test suite.
+- All five private component checkouts (Athlys2–Athlys6) succeeded using the configured read-only credential. This operationally confirms that the secret and readiness variable were available to this run.
+- Test results from the single consolidated runner: Athlys1 27/27, Athlys2 4/4, Athlys3 5/5, Athlys4 6/6, Athlys5 5/5, Athlys6 6/6 — **53 distinct tests passed, zero failures**.
+- The separate cross-component suite was also executed and passed **4/4**. These four tests are already included in Athlys1's 27 tests, so they are not added again to the distinct-test total.
+- All six repositories were checked out at the immutable SHAs listed in `component-manifest.txt`.
+- CycloneDX 1.6 source inventory includes six components. SHA-256 checksums for all seven TAP files and the inventory were independently recomputed from the downloaded artifact and all matched.
+- Evidence artifacts: `athlys-six-component-evidence-68077476b831e4a3dcd975a550ddb11cf7bfa9b9` and `athlys1-test-evidence-68077476b831e4a3dcd975a550ddb11cf7bfa9b9`, retained until 2027-02-10.
+
+The run emitted a non-fatal GitHub warning that the pinned checkout/setup-node/upload-artifact action commits target Node.js 20 and are being forced to Node.js 24 on the hosted runner. Plan a controlled migration to Node-24-compatible action releases, re-pin their full commit SHAs, and rerun CI. The current run itself completed successfully.
+
+This verifies the six-component test/integration gate, not a production build, dependency-complete release SBOM, signed provenance, branch protection, merge, or deployment.
