@@ -15,7 +15,7 @@ Validates immutable run identity, rejects missing/unknown checks, distinguishes 
 - GitHub Actions: fresh run, no test cache.
 - Runtime: Node.js 22 on Ubuntu 24.04.
 - Spec Kit CLI: `specify-cli 1.4.1.dev0`, pinned to upstream commit `979b0a3c1277283371c9901ad0eed04b64a99997`.
-- Component tests: **5/5 passed** on the latest completed run for this branch.
+- Component tests: **7/7 passed** on the latest completed run for this branch.
 - The official CLI scaffold was generated in an isolated temporary directory. Existing repository specifications and constitution were not overwritten.
 
 ## Not yet production-ready
