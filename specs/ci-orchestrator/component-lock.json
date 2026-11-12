@@ -4,28 +4,28 @@
   "components": {
     "Athlys2": {
       "repository": "heat936/Athlys2",
-      "ref": "cd2270b8585c158be5522105f887ad56996832ca",
-      "commit": "cd2270b8585c158be5522105f887ad56996832ca"
+      "ref": "5c7f3297f185cb712788a3fa11dd66f72f915313",
+      "commit": "5c7f3297f185cb712788a3fa11dd66f72f915313"
     },
     "Athlys3": {
       "repository": "heat936/Athlys3",
-      "ref": "a3514f6cea0635ba3a30e71ec1a6d2ffa3f2e784",
-      "commit": "a3514f6cea0635ba3a30e71ec1a6d2ffa3f2e784"
+      "ref": "0bd03844f9395da936721ab696eac235af31642b",
+      "commit": "0bd03844f9395da936721ab696eac235af31642b"
     },
     "Athlys4": {
       "repository": "heat936/Athlys4",
-      "ref": "035dbb8e77d53a42121e8bd1d63eaab95f4e8ce2",
-      "commit": "035dbb8e77d53a42121e8bd1d63eaab95f4e8ce2"
+      "ref": "38dda1d6940015ac4fb573ee9a4c6eb82b3c08",
+      "commit": "38dda1d6940015ac4fb573ee9a4c6eb82b3c08"
     },
     "Athlys5": {
       "repository": "heat936/Athlys5",
-      "ref": "adc552b8d489db6e4bbc70790a99a81d189ed421",
-      "commit": "adc552b8d489db6e4bbc70790a99a81d189ed421"
+      "ref": "06a112f9a32fa4f26d70bd26f6932c0929172dfa",
+      "commit": "06a112f9a32fa4f26d70bd26f6932c0929172dfa"
     },
     "Athlys6": {
       "repository": "heat936/Athlys6",
-      "ref": "57e4b1cc3483d1eaf6fb1b30aac690fee19b12ba",
-      "commit": "57e4b1cc3483d1eaf6fb1b30aac690fee19b12ba"
+      "ref": "6933747d4765438a8f634ad125ae5f3edb4d8c48",
+      "commit": "6933747d4765438a8f634ad125ae5f3edb4d8c48"
     }
   }
 }
