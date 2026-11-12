@@ -44,7 +44,8 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 - **Passed:** each repository's own PR gate runs on every PR update and publishes test evidence.
 - **Implemented, gated:** one-runner consolidated six-suite test after the read-only cross-repository credential is configured.
 - **Not yet verified:** consolidated six-repository execution in one runner; current successful evidence comes from the six individual PR workflows.
-- **Future:** signed attestations, SBOM generation, APK signing/verification, second independent CI provider, durable evidence store, automated cross-repository dispatch, and end-to-end product integration tests.
+- **Implemented, pending consolidated-run verification:** CycloneDX 1.6 source-tree inventory for all six immutable repository revisions. This is source inventory only, not dependency-complete SBOM.
+- **Future:** dependency-complete SBOM from actual build inputs, signed attestations, APK signing/verification, second independent CI provider, durable evidence store, automated cross-repository dispatch, and end-to-end product integration tests.
 - A GitHub Actions artifact is temporary evidence, not a durable compliance archive.
 
 
