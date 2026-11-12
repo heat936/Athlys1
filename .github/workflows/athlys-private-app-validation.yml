@@ -1,0 +1,76 @@
+name: Athlys private application validation
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: athlys-private-app-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-private-source:
+    name: Clone and validate private Athlys application
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Mask private source identity before checkout
+        shell: bash
+        run: |
+          echo "::add-mask::Lijw936/Athlys2"
+          echo "::add-mask::43fcb4ef0ab405631d56c5d74799bd9a7f296958"
+
+      - name: Clone immutable private Athlys source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Lijw936/Athlys2
+          ref: 43fcb4ef0ab405631d56c5d74799bd9a7f296958
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          path: private-source
+          persist-credentials: false
+          clean: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: private-source/package.json
+
+      - name: Install locked project dependencies
+        working-directory: private-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+
+      - name: Run release verification suite
+        working-directory: private-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run verify:release
+
+      - name: Build web application
+        working-directory: private-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build:web
+
+      - name: Publish privacy-safe result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Private Athlys source validation"
+            echo "- Source identity: masked in logs"
+            echo "- Checkout: ephemeral runner workspace only"
+            echo "- Source files and build outputs: not uploaded as artifacts"
+            echo "- Validation result: inspect the job conclusion above"
+          } >> "$GITHUB_STEP_SUMMARY"
