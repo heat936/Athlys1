@@ -1,6 +1,6 @@
 # CI Security and Contract Hardening — Specification
 
-Status: implementation applied on the six component PR branches; automated verification pending.
+Status: component hardening implemented; cross-component integration contract tests added to the consolidated workflow; consolidated execution remains gated by the read-only cross-repository credential.
 
 ## Objective
 Close the highest-risk correctness gaps found in the initial six-repository audit while preserving the provider-neutral, least-privilege CI architecture.
@@ -29,7 +29,8 @@ Close the highest-risk correctness gaps found in the initial six-repository audi
 5. Credential-like assignments in text and URL query strings are redacted before telemetry output.
 6. Non-retryable integration errors stop after one attempt; retryable failures are bounded to at most three attempts and reuse the same idempotency key.
 7. Each component PR workflow passes on its updated immutable PR head.
-8. The central lock manifest pins the updated component SHAs after their individual PR checks pass.
+8. The consolidated workflow runs cross-component contract tests that compose runner, quality, orchestrator, artifact, observability, retry, and six-repository registry behavior.
+9. The central lock manifest pins the updated component SHAs after their individual PR checks pass.
 
 ## Security and human decision boundaries
 - Trusted signing fingerprints are trust anchors supplied by the consuming environment; this component does not create or provision trust.
