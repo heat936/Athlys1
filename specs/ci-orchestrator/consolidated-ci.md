@@ -92,3 +92,19 @@ Commit: `2a330424c38d0de23f1428233e2c0ea736dd2781`
 The run emitted a non-fatal GitHub warning that the pinned checkout/setup-node/upload-artifact action commits target Node.js 20 and are being forced to Node.js 24 on the hosted runner. Plan a controlled migration to Node-24-compatible action releases, re-pin their full commit SHAs, and rerun CI. The current run itself completed successfully.
 
 This verifies the six-component test/integration gate, not a production build, dependency-complete release SBOM, signed provenance, branch protection, merge, or deployment.
+
+
+## Node.js 24 action runtime migration — 2026-11-12
+
+The six-repository CI workflow set has been migrated from the prior Node.js 20 action releases to upstream action releases whose exact pinned commits declare `runs.using: node24`:
+
+- `actions/checkout` v7.0.1 — `3d3c42e5aac5ba805825da76410c181273ba90b1`.
+- `actions/setup-node` v7.1.0 — `949feb2413d6458794dcd2491c4babbbce0c15c1`.
+- `actions/upload-artifact` v7.0.2 — `cf430e030ddbb5b0abf93d22962f4752f3646cd9`.
+- `astral-sh/setup-uv` remains pinned to v5.4.2 — `d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86`; it is a composite action and does not use the Node.js action runtime.
+
+The three Node action pins were resolved from official upstream Git refs and their `action.yml` files were inspected at the pinned commits. All workflow triggers, read-only permissions, concurrency groups, test commands, artifact paths, and retention settings were preserved.
+
+Specification and acceptance criteria: `specs/ci-orchestrator/node24-action-runtime-migration.md`.
+
+Status: workflow changes applied to the six-repository feature branch and documented. The updated component and consolidated workflow runs are the remaining verification gate. No merge, release, or production deployment was performed.
