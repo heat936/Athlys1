@@ -2,11 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
 
-import { validateRunnerPolicy, runnerEvidence } from "../../Athlys2/src/runner-policy.mjs";
-import { buildQualityReport } from "../../Athlys3/src/quality-report.mjs";
-import { sha256, verifyArtifact } from "../../Athlys4/src/artifact-verifier.mjs";
-import { normalizeEvent, deduplicateAlerts } from "../../Athlys5/src/observability.mjs";
-import { validateComponentResults, retryIdempotently } from "../../Athlys6/src/integration-contract.mjs";
+import { validateRunnerPolicy, runnerEvidence } from "../components/Athlys2/src/runner-policy.mjs";
+import { buildQualityReport } from "../components/Athlys3/src/quality-report.mjs";
+import { sha256, verifyArtifact } from "../components/Athlys4/src/artifact-verifier.mjs";
+import { normalizeEvent, deduplicateAlerts } from "../components/Athlys5/src/observability.mjs";
+import { validateComponentResults, retryIdempotently } from "../components/Athlys6/src/integration-contract.mjs";
 import { aggregateResults, createEvidenceManifest, verifyEvidenceManifest } from "../src/orchestrator.mjs";
 import { createRunRegistry, applyRunEvent, summarizeRun, createEventIdempotencyKey } from "../src/run-registry.mjs";
 
