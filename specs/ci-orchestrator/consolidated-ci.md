@@ -146,7 +146,7 @@ New workflow: `.github/workflows/supply-chain-attestation.yml`. It runs only on 
 The workflow:
 - Checks out the six immutable component commits from `component-lock.json` and re-runs their tests.
 - Scans the six source trees, pinned action sources and pinned Spec Kit source with Syft v1.57.1.
-- Resolves a fresh Spec Kit `uv.lock` for the pinned upstream source and records the exact Python package freeze.
+- Resolves the Spec Kit `uv.lock` for the pinned upstream source, verifies its SHA-256 against the committed fingerprint in `specs/ci-orchestrator/spec-kit-uv.lock.sha256`, then installs with `uv sync --locked` and records the exact Python package freeze. The fingerprint makes dependency drift fail closed; it does not eliminate the resolution step or replace committing the full lockfile.
 - Captures the Ubuntu dpkg package inventory and exact runtime/tool versions.
 - Produces an internal source inventory and source archive only inside the ephemeral runner.
 - Produces a public CycloneDX 1.6 SBOM with private repository names, source commits and source paths redacted.
