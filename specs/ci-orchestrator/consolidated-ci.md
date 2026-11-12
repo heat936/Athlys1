@@ -63,7 +63,7 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 
 
 ## CI supply-chain hardening — 2026-11-12
-- All external GitHub Actions referenced by the six-repository CI workflows are now pinned to full 40-character commit SHAs: checkout v4, setup-node v4, upload-artifact v4, and setup-uv v5.4.2.
+- All external GitHub Actions referenced by the six-repository CI workflows are pinned to full 40-character commit SHAs. The current action set is checkout v7.0.1, setup-node v7.1.0, upload-artifact v7.0.2, setup-uv v10.3.3 and attest v4.2.2.
 - The pinned SHAs were resolved against the official upstream repositories; the setup-uv commit signature was verified through GitHub's commit verification metadata.
 - The action dependency versions and the precise SBOM scope/limitations are recorded in `specs/ci-orchestrator/dependency-inventory.md`.
 - Corrected cross-component test imports to resolve sibling checkouts from `components/Athlys1/integration` into `components/Athlys2` through `components/Athlys6`.
@@ -101,7 +101,7 @@ The six-repository CI workflow set has been migrated from the prior Node.js 20 a
 - `actions/checkout` v7.0.1 — `3d3c42e5aac5ba805825da76410c181273ba90b1`.
 - `actions/setup-node` v7.1.0 — `949feb2413d6458794dcd2491c4babbbce0c15c1`.
 - `actions/upload-artifact` v7.0.2 — `cf430e030ddbb5b0abf93d22962f4752f3646cd9`.
-- `astral-sh/setup-uv` remains pinned to v5.4.2 — `d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86`; it is a composite action and does not use the Node.js action runtime.
+- `astral-sh/setup-uv` was subsequently migrated from v5.4.2 (Node 20 runtime) to v10.3.3 — `68559e99cc807c1eb7e9238fd43a15bba460eec2` (Node 24). The exact v10.3.3 action metadata declares Node 24.
 
 The three Node action pins were resolved from official upstream Git refs and their `action.yml` files were inspected at the pinned commits. All workflow triggers, read-only permissions, concurrency groups, test commands, artifact paths, and retention settings were preserved.
 
@@ -135,3 +135,24 @@ Commit: `f680b2ab928e04565d4b00ab8b495aa6380a5a3d`
 Both jobs succeeded against the refreshed six-repository component lock. The source manifest records the current verified feature-branch heads for Athlys1–Athlys6. The six suites passed 53 distinct tests with zero failures; the separate cross-component TAP file contains four tests already included in Athlys1's recursive test discovery and is not double-counted. The CycloneDX 1.6 source inventory contains six components, and all eight SHA-256 entries were independently recomputed from the downloaded artifact and matched. Artifact ZIP digest: `sha256:9891e504d35acdd67fcaf86a530b9ccbc3bac13312e72533f6774a8c950999f8`.
 
 The final consolidated job logs contain no Node.js 20 deprecation/forced-runtime warning. The six PRs remain open and draft; no merge, production deployment, or release publication occurred.
+
+
+## Supply-chain SBOM and signed attestations — implementation
+
+Specification: `specs/ci-orchestrator/supply-chain-sbom-and-attestation.md`.
+
+New workflow: `.github/workflows/supply-chain-attestation.yml`. It runs only on pushes to `spec/ci-independence-bootstrap` or manual dispatch on that branch; it does not grant attestation write permissions to pull-request jobs.
+
+The workflow:
+- Checks out the six immutable component commits from `component-lock.json` and re-runs their tests.
+- Scans the six source trees, pinned action sources and pinned Spec Kit source with Syft v1.57.1.
+- Resolves a fresh Spec Kit `uv.lock` for the pinned upstream source and records the exact Python package freeze.
+- Captures the Ubuntu dpkg package inventory and exact runtime/tool versions.
+- Produces an internal source inventory and source archive only inside the ephemeral runner.
+- Produces a public CycloneDX 1.6 SBOM with private repository names, source commits and source paths redacted.
+- Generates SLSA provenance and CycloneDX SBOM attestations with `actions/attest` v4.2.2 and verifies them with `gh attestation verify`.
+- Uploads only the sanitized SBOM and its SHA-256 manifest. The private source archive is never uploaded.
+
+The BOM is explicitly marked `aggregate: incomplete`: it inventories detected manifests/lockfiles and the observed runner/tool environment, but does not claim to be a production binary/container/release SBOM. The Spec Kit lock is resolved per run and not yet committed, so cross-run dependency reproducibility remains a follow-up.
+
+Historical evidence caveat: earlier public Athlys1 CI artifacts and logs may contain private repository identifiers and source commit IDs. This workflow prevents new disclosure in the SBOM artifact but does not delete prior artifacts; historical purge is a separate operation and has not been attempted.
