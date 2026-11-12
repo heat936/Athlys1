@@ -25,7 +25,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       SYFT_VERSION: "1.57.1"
-      SYFT_BINARY_SHA256: "2355758c1142982a67b309604c5d75effdbe638a57c771979ea8fd1a16656abc"
+      SYFT_BINARY_SHA256: "bf52519eb57f675d47c07d43213cb6dff6449f3d6d1147ff6701ed91f44eef0c"
     steps:
       - name: Checkout Athlys1 orchestrator
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
