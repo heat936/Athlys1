@@ -82,6 +82,11 @@ jobs:
           for repo in Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
             sha="$(jq -er ".components.${repo}.commit" "$manifest")"
             [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+            # Prevent checkout action diagnostics and subsequent log lines from
+            # disclosing private component identifiers or immutable revisions.
+            echo "::add-mask::${repo}"
+            echo "::add-mask::heat936/${repo}"
+            echo "::add-mask::${sha}"
             echo "${repo,,}=$sha" >> "$GITHUB_OUTPUT"
           done
       - name: Checkout Athlys2
