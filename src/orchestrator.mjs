@@ -16,7 +16,11 @@ export function validateRun(run) {
 export function aggregateResults(run, results) {
   const errors=validateRun(run);
   if(errors.length) throw new TypeError(errors.join("; "));
-  const incoming=results??[];\n  if(new Set(incoming.map(r=>r.name)).size!==incoming.length) throw new TypeError("result names must be unique");\n  const byName=new Map(incoming.map(r=>[r.name,r]));\n  const unexpected=[...byName.keys()].filter(name=>!run.requiredChecks.includes(name));\n  if(unexpected.length) throw new TypeError("unexpected result names: "+unexpected.join(", "));
+  const incoming=results??[];
+  if(new Set(incoming.map(r=>r.name)).size!==incoming.length) throw new TypeError("result names must be unique");
+  const byName=new Map(incoming.map(r=>[r.name,r]));
+  const unexpected=[...byName.keys()].filter(name=>!run.requiredChecks.includes(name));
+  if(unexpected.length) throw new TypeError("unexpected result names: "+unexpected.join(", "));
   const checks=run.requiredChecks.map(name=>({name,...(byName.get(name)??{status:"unavailable",fresh:false,reason:"missing result"})}));
   const invalid=checks.filter(c=>!TERMINAL.has(c.status));
   if(invalid.length) throw new TypeError("unknown status for: "+invalid.map(x=>x.name).join(", "));
