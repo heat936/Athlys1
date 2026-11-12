@@ -125,3 +125,13 @@ Commit: `8400e4807c1a6da43351db375d67c597ec3913d7`
 - After the component checks passed, `component-lock.json` was refreshed to the latest verified branch SHAs for Athlys2–Athlys6. A further consolidated run against the refreshed lock is the remaining verification of that lock-only change.
 
 All six PRs remain open and draft. No merge, production deployment, or release publication occurred.
+
+
+### Final refreshed-lock verification
+
+Run #92: https://github.com/heat936/Athlys1/actions/runs/43229604323  
+Commit: `f680b2ab928e04565d4b00ab8b495aa6380a5a3d`
+
+Both jobs succeeded against the refreshed six-repository component lock. The source manifest records the current verified feature-branch heads for Athlys1–Athlys6. The six suites passed 53 distinct tests with zero failures; the separate cross-component TAP file contains four tests already included in Athlys1's recursive test discovery and is not double-counted. The CycloneDX 1.6 source inventory contains six components, and all eight SHA-256 entries were independently recomputed from the downloaded artifact and matched. Artifact ZIP digest: `sha256:9891e504d35acdd67fcaf86a530b9ccbc3bac13312e72533f6774a8c950999f8`.
+
+The final consolidated job logs contain no Node.js 20 deprecation/forced-runtime warning. The six PRs remain open and draft; no merge, production deployment, or release publication occurred.
