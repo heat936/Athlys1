@@ -16,6 +16,9 @@
 - [x] Run updated PR workflows and inspect every test result: all six component gates passed; 47/47 tests passed.
 - [x] Update Athlys1 immutable component lock with verified latest component SHAs.
 - [ ] Execute consolidated six-component suite after credential/readiness setup; blocked until ATHLYS_READ_TOKEN and ATHLYS_CI_READY are configured.
+- [x] Correct sibling checkout import paths in the cross-component suite; validate the Athlys1 PR workflow after the correction.
+- [x] Pin checkout, setup-node, upload-artifact, and setup-uv workflow actions to full upstream commit SHAs across the six-repository CI slice.
+- [x] Record the CI action dependency inventory and explicitly bound the CycloneDX source-inventory scope.
 - [x] Fix source-inventory manifest validation ordering; final Athlys1 suite passed 23/23 with strict pipeline failure propagation.
 
 ## Remaining security and release gates
