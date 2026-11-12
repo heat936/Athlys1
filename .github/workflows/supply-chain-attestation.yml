@@ -200,6 +200,9 @@ jobs:
           cd tool-sources/spec-kit
           uv python install 3.12
           uv lock --python 3.12
+          expected_lock_sha="$(awk '{print $1}' "$GITHUB_WORKSPACE/components/Athlys1/specs/ci-orchestrator/spec-kit-uv.lock.sha256")"
+          [[ "$expected_lock_sha" =~ ^[0-9a-f]{64}$ ]]
+          printf '%s  %s\\n' "$expected_lock_sha" uv.lock | sha256sum --check -
           uv sync --locked --python 3.12 --no-dev
           test -x .venv/bin/specify
           .venv/bin/specify --version | tee "$GITHUB_WORKSPACE/evidence/internal/specify-version.txt"
