@@ -153,7 +153,7 @@ The workflow:
 - Generates SLSA provenance and CycloneDX SBOM attestations with `actions/attest` v4.2.2 and verifies them with `gh attestation verify`.
 - Uploads only the sanitized SBOM and its SHA-256 manifest. The private source archive is never uploaded.
 
-The BOM is explicitly marked `aggregate: incomplete`: it inventories detected manifests/lockfiles and the observed runner/tool environment, but does not claim to be a production binary/container/release SBOM. The Spec Kit lock is resolved per run and not yet committed, so cross-run dependency reproducibility remains a follow-up.
+The BOM is explicitly marked `aggregate: incomplete`: it inventories detected manifests/lockfiles and the observed runner/tool environment, but does not claim to be a production binary/container/release SBOM. The Spec Kit lock's committed SHA-256 fingerprint now makes dependency drift fail closed; committing the complete lockfile remains a follow-up for fully lock-driven resolution.
 
 Historical evidence caveat: earlier public Athlys1 CI artifacts and logs may contain private repository identifiers and source commit IDs. This workflow prevents new disclosure in the SBOM artifact but does not delete prior artifacts; historical purge is a separate operation and has not been attempted.
 
