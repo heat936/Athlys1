@@ -10,8 +10,9 @@ Apply small, component-owned changes on the existing feature branches. Keep the 
 4. Preserve the existing quality-report component (Athlys3) and include it in the next consolidated suite.
 5. Run all updated PR gates; inspect test logs, workflow conclusions, and evidence artifacts.
 6. Update the immutable component lock only after each component PR check succeeds.
-7. Attempt consolidated six-component execution only when the authorized read-only cross-repository secret and readiness variable are configured.
-8. Review diffs and record residual controls before any merge or release decision.
+7. Add an executable cross-component integration suite to the consolidated job; verify runner-to-quality-to-orchestrator flow, artifact signature/SBOM binding, telemetry redaction, retry behavior, and six-target aggregation.
+8. Attempt consolidated six-component execution only when the authorized read-only cross-repository secret and readiness variable are configured.
+9. Review diffs and record residual controls before any merge or release decision.
 
 ## Security decisions
 - Ed25519 verification is performed locally with Node's built-in crypto module.
