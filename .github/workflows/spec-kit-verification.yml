@@ -136,6 +136,7 @@ jobs:
             printf '%s %s\n' "$repo" "$sha" | tee -a evidence/component-manifest.txt
             (cd "components/$repo" && node --test --test-reporter=tap > "../../evidence/$repo.tap")
           done
+          (cd evidence && sha256sum *.tap > SHA256SUMS)
       - name: Publish consolidated summary
         if: always()
         shell: bash
@@ -143,6 +144,10 @@ jobs:
           echo '## Consolidated component evidence' >> "$GITHUB_STEP_SUMMARY"
           if [ -f evidence/component-manifest.txt ]; then
             cat evidence/component-manifest.txt >> "$GITHUB_STEP_SUMMARY"
+            if [ -f evidence/SHA256SUMS ]; then
+              echo "### Evidence SHA-256" >> "$GITHUB_STEP_SUMMARY"
+              cat evidence/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+            fi
           else
             echo 'Component manifest was not produced.' >> "$GITHUB_STEP_SUMMARY"
           fi
