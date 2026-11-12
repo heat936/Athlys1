@@ -62,4 +62,14 @@ The three Node action commits were resolved from official upstream release tags 
 - The workflow job logs for Athlys1–Athlys6 contain no Node.js 20 deprecation/forced-runtime warning.
 - All six PRs remain open and draft. No merge, release, or production deployment occurred.
 
-After those component checks passed, the immutable component lock was refreshed to the latest verified feature-branch SHAs for Athlys2–Athlys6. The lock-refresh commit is `946adabc16d5116402ba1a8996997d37f31282f3`; a consolidated run against this refreshed lock remains the final follow-up verification.
+## Final verification against the refreshed component lock
+
+- Consolidated run #92: https://github.com/heat936/Athlys1/actions/runs/43229604323 — **success**, including both orchestrator and six-component jobs.
+- The run consumed the refreshed lock and recorded the current verified heads: Athlys1 `f680b2ab928e04565d4b00ab8b495aa6380a5a3d`, Athlys2 `bb20a50b0f46f114f701bdc6053aae3ea3f145f4`, Athlys3 `2ee4478dc9c1b135f08dc6cf08029e246fd569d7`, Athlys4 `a5400cccc04d202e17b4dbcaa08b926f6ec965d4`, Athlys5 `22314d1e3344a345c37308acdb2e4b8362152b2a`, Athlys6 `efc18ba89d91c6c92659af8ea90d077b203050d8`.
+- TAP suites: 53 distinct tests passed, zero failures. Four cross-component tests are also written to a separate TAP file but are already discovered by the Athlys1 suite and are not double-counted.
+- The final artifact contains all six TAP files, the separate cross-component TAP, the component manifest, CycloneDX 1.6 inventory with six components, and eight SHA-256 entries. All eight checksums were independently recomputed and matched.
+- Final artifact digest: `sha256:9891e504d35acdd67fcaf86a530b9ccbc3bac13312e72533f6774a8c950999f8`; retention through 2027-02-10.
+- No Node.js 20 deprecation/forced-runtime warning appears in either final consolidated job log.
+- All six PRs remain open and draft. No merge, release, or production deployment occurred.
+
+All acceptance criteria AC1–AC8 are now verified.
