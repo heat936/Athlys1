@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "policy": "Immutable component commits used by the consolidated integration suite. Update only after the corresponding component PR check passes.",
+  "components": {
+    "Athlys2": {
+      "repository": "heat936/Athlys2",
+      "ref": "a47acdba8bd9c79105f19d4baa06c88a59a9de2c",
+      "commit": "a47acdba8bd9c79105f19d4baa06c88a59a9de2c"
+    },
+    "Athlys3": {
+      "repository": "heat936/Athlys3",
+      "ref": "909ef52750c38ab644a3879f316fbc5a2de3c22f",
+      "commit": "909ef52750c38ab644a3879f316fbc5a2de3c22f"
+    },
+    "Athlys4": {
+      "repository": "heat936/Athlys4",
+      "ref": "64a4a07d6610edcaee4a2a20fb7c2b30435498d9",
+      "commit": "64a4a07d6610edcaee4a2a20fb7c2b30435498d9"
+    },
+    "Athlys5": {
+      "repository": "heat936/Athlys5",
+      "ref": "876bd52d79755e8f23056b11f35d317882f05f9c",
+      "commit": "876bd52d79755e8f23056b11f35d317882f05f9c"
+    },
+    "Athlys6": {
+      "repository": "heat936/Athlys6",
+      "ref": "738135d7c5a1ebddbe76d072ec1fb4c6b3e5211c",
+      "commit": "738135d7c5a1ebddbe76d072ec1fb4c6b3e5211c"
+    }
+  }
+}
