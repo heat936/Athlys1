@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test --test-reporter=tap | tee test-results.tap
+          node --test --test-reporter=tap test/*.test.mjs | tee test-results.tap
       - name: Hash test evidence
         if: always()
         shell: bash
