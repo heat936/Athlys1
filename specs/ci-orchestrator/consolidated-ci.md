@@ -9,7 +9,7 @@ Provide a reliable PR gate for every code or documentation change, retain audita
 - Every repository (Athlys1–Athlys6) runs its own lightweight Node.js 22 component test gate on every PR update. There are no path filters, so a PR cannot silently avoid its test gate because a changed file was omitted from a filter.
 - Athlys1 owns the optional consolidated integration workflow. When enabled, one Ubuntu 24.04 runner checks out six allowlisted repositories at immutable SHAs from `specs/ci-orchestrator/component-lock.json` and executes all six test suites.
 - Athlys2–Athlys6 retain a separate manual `workflow_dispatch` audit for the pinned official Spec Kit CLI. The CLI installation/scaffolding is deliberately outside routine PR checks.
-- Each PR test workflow emits TAP output, adds it to the GitHub Actions job summary, computes a SHA-256 checksum, and uploads both files as a test-evidence artifact (90-day retention). The consolidated workflow uploads the source manifest, per-component TAP files, and a SHA-256 checksum manifest (90-day retention).
+- Each PR test workflow emits TAP output, adds it to the GitHub Actions job summary, computes a SHA-256 checksum, and uploads both files as a test-evidence artifact (90-day retention). Each test step explicitly enables Bash `set -euo pipefail` so a failing Node test cannot be hidden by a successful `tee` process. The consolidated workflow uploads the source manifest, per-component TAP files, and a SHA-256 checksum manifest (90-day retention).
 - All PR workflows use concurrency cancellation to stop superseded runs. Jobs have bounded timeouts and read-only repository permissions.
 - The integrated job is skipped without allocating a runner unless repository variable `ATHLYS_CI_READY=true`. The Athlys1-only PR gate remains active.
 
@@ -57,5 +57,6 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 - Athlys6 integration harness: only explicitly retryable errors are retried; retry budget remains at three and the idempotency key is reused.
 - Latest component PR checks passed: Athlys1 21/21, Athlys2 4/4, Athlys3 5/5, Athlys4 6/6, Athlys5 5/5, Athlys6 6/6 — 47/47 total. Test-evidence artifacts were present and unexpired at verification time.
 - The immutable component lock has been refreshed to the verified component PR heads.
+- A new source-inventory test initially exposed two defects: duplicate-manifest validation occurred after filesystem access, and test pipelines did not explicitly enable `pipefail`. Both were corrected. The final Athlys1 test job reported 23/23 passed; all five component workflow updates for Athlys2–Athlys6 completed successfully with strict pipeline handling.
 - **Still blocked:** the integrated six-repository job remains intentionally skipped until the read-only secret ATHLYS_READ_TOKEN and repository variable ATHLYS_CI_READY=true are configured. No secret value is available to the connector.
 - The security hardening is not a signed build-attestation system, does not generate production SBOMs from actual release builds, and does not establish durable evidence retention or a second CI provider.
