@@ -33,3 +33,7 @@
 - No main-branch merge, production deployment, release publication, DNS change, Supabase migration, or secret mutation.
 - No claim of signed provenance until a real trusted signing/attestation workflow is configured.
 - No secrets in source, test fixtures, summaries, or artifacts.
+
+- [x] Add cross-component contract tests to the consolidated CI job (runner → quality → orchestrator → evidence; artifact verification; telemetry redaction; retry behavior; six-target run aggregation).
+- [ ] Execute the consolidated cross-component suite on the six immutable repository revisions; blocked until the read-only cross-repository credential and readiness variable are configured.
+- [ ] Validate signed build provenance and dependency-complete SBOM generation from actual build inputs.
