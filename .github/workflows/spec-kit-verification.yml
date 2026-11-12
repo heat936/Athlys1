@@ -20,11 +20,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout immutable source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
       - name: Run orchestrator tests
@@ -49,7 +49,7 @@ jobs:
           fi
       - name: Upload orchestrator test evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: athlys1-test-evidence-${{ github.sha }}
           path: |
@@ -66,7 +66,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout Athlys1
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: heat936/Athlys1
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -85,7 +85,7 @@ jobs:
             echo "${repo,,}=$sha" >> "$GITHUB_OUTPUT"
           done
       - name: Checkout Athlys2
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: heat936/Athlys2
           ref: ${{ steps.lock.outputs.athlys2 }}
@@ -93,7 +93,7 @@ jobs:
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys3
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: heat936/Athlys3
           ref: ${{ steps.lock.outputs.athlys3 }}
@@ -101,7 +101,7 @@ jobs:
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys4
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: heat936/Athlys4
           ref: ${{ steps.lock.outputs.athlys4 }}
@@ -109,7 +109,7 @@ jobs:
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys5
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: heat936/Athlys5
           ref: ${{ steps.lock.outputs.athlys5 }}
@@ -117,7 +117,7 @@ jobs:
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Checkout Athlys6
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: heat936/Athlys6
           ref: ${{ steps.lock.outputs.athlys6 }}
@@ -125,7 +125,7 @@ jobs:
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
       - name: Run all component tests and record source identities
@@ -158,7 +158,7 @@ jobs:
           fi
       - name: Upload consolidated evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: athlys-six-component-evidence-${{ github.sha }}
           path: evidence/
