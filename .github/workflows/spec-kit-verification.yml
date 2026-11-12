@@ -37,6 +37,8 @@ jobs:
           specify --version
           specify check
           specify --help
+      - name: Inspect Spec Kit initialization syntax before applying it
+        run: specify init --help
       - name: Execute component tests (fresh run)
         run: node --test
       - name: Record source identity
