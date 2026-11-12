@@ -20,3 +20,6 @@ Validates immutable run identity, rejects missing/unknown checks, distinguishes 
 
 ## Not yet production-ready
 Cross-repository dispatch, a second independent CI provider, persistent evidence storage, signed attestations, SBOM generation, and full end-to-end pipeline orchestration remain open. No merge, release publication, or deployment is performed by this repository.
+
+## Security hardening
+Evidence manifests now expose a SHA-256 integrity verifier that detects changes to the canonical manifest payload. This is integrity checking, not a digital signature or signed build attestation.
