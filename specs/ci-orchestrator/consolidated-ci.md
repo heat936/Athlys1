@@ -11,7 +11,7 @@ Reduce six independent GitHub-hosted jobs to one consolidated runner for routine
 - Athlys2–Athlys6 expose manual-only component and official Spec Kit CLI audits. They do not start a runner for every ordinary PR push.
 - The consolidated workflow cancels superseded runs for the same PR/ref and uses path filters to ignore irrelevant changes.
 - Each checkout records its resolved commit SHA so the six-source set is auditable.
-- The consolidated job is skipped without consuming a runner unless repository variable `ATHLYS_CI_READY=true`.
+- Athlys1 runs one small local orchestrator test job on relevant PR updates. The cross-repository job is skipped without allocating a runner unless repository variable `ATHLYS_CI_READY=true`.
 
 ## Required one-time configuration
 The initial integrated run showed that the default Athlys1 `GITHUB_TOKEN` cannot read at least Athlys3 (GitHub returned “Repository not found”). The repositories must not be made public just to work around this.
@@ -38,7 +38,7 @@ The consolidated workflow automatically runs when the Athlys1 PR is opened or up
 - One consolidated runner executes all six test suites after access is configured.
 - Any failed suite fails the single consolidated check.
 - Superseded runs are cancelled.
-- No runner is allocated while `ATHLYS_CI_READY` is unset or not `true`.
+- No cross-repository runner is allocated while `ATHLYS_CI_READY` is unset or not `true`; the small Athlys1-only test job remains active.
 - No routine CLI install/scaffold occurs.
 - Manual CLI audits remain available per repository.
 - A second independent CI provider, durable evidence storage, signed attestations, and SBOM production remain future gates.
