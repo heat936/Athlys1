@@ -31,7 +31,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
       - name: Install official GitHub Spec Kit CLI
-        run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+        run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@979b0a3c1277283371c9901ad0eed04b64a99997
       - name: Verify Spec Kit CLI
         run: |
           specify --version
@@ -39,6 +39,13 @@ jobs:
           specify --help
       - name: Inspect Spec Kit initialization syntax before applying it
         run: specify init --help
+      - name: Execute official Spec Kit scaffold in an isolated temporary directory
+        run: |
+          tmpdir="$(mktemp -d)"
+          cd "$tmpdir"
+          specify init . --non-interactive --ignore-agent-tools
+          test -d .specify
+          find .specify -maxdepth 3 -type f -print | sort
       - name: Execute component tests (fresh run)
         run: node --test
       - name: Record source identity
