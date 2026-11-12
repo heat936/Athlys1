@@ -88,7 +88,7 @@ Athlys1 and Athlys2 are public; Athlys3–Athlys6 are private. The workflow runs
 
 - GitHub artifact attestations are supported on public repositories for current GitHub plans; private/internal repository attestations require GitHub Enterprise Cloud. This workflow therefore signs only a sanitized SBOM in public Athlys1.
 - The attestation proves the source archive digest and the CI workflow identity; it does not prove a production release or binary build.
-- Spec Kit upstream currently has no committed `uv.lock`; the resolved Python dependency versions are captured per run. Until a reviewed lock is committed, the Spec Kit dependency environment is traceable but not fully reproducible across time.
+- The pinned upstream Spec Kit source has no committed `uv.lock`. Athlys now commits `specs/ci-orchestrator/spec-kit-uv.lock.sha256`, pinning the SHA-256 of the reviewed 225,185-byte lock captured in the verified SBOM artifact. The workflow resolves the lock and fails closed unless its bytes match this fingerprint, then installs with `uv sync --locked`. This is a drift-detection gate, not equivalent to storing the complete `uv.lock` in Git: resolution still occurs before the hash check, and any changed dependency graph requires an explicit reviewed fingerprint update. The full lock remains preserved in the signed public SBOM artifact.
 - Syft catalogs package metadata and lockfiles it recognizes. Bundled JavaScript dependencies not separately represented by package manifests/lockfiles may require additional binary-level analysis.
 - Ubuntu hosted-runner image is mutable; the exact image and installed package inventory are captured per run, but the GitHub-hosted runner image itself is not pinned.
 
