@@ -16,7 +16,7 @@ No application code, production workflow, secrets, repository settings, merge, o
 - R1: Every `actions/checkout` reference in scope uses a full 40-character immutable SHA for an upstream release whose action metadata declares `runs.using: node24`.
 - R2: Every `actions/setup-node` reference in scope uses a full 40-character immutable SHA for an upstream release whose action metadata declares `runs.using: node24`.
 - R3: Every `actions/upload-artifact` reference in scope uses a full 40-character immutable SHA for an upstream release whose action metadata declares `runs.using: node24`.
-- R4: `astral-sh/setup-uv` remains pinned to a full SHA; it is a composite action and is not part of the Node 20 warning migration.
+- R4: `astral-sh/setup-uv` also uses a full SHA for a release whose action metadata declares `runs.using: node24`.
 - R5: Existing workflow triggers, permissions, concurrency, timeouts, test commands, artifact paths, retention, and secret handling remain unchanged.
 - R6: The action inventory records exact versions and SHAs, and all six repositories receive updated workflow references.
 - R7: No PR may be merged and no production deployment or release may be triggered by this change.
@@ -25,7 +25,7 @@ No application code, production workflow, secrets, repository settings, merge, o
 - `actions/checkout` v7.0.1 — `3d3c42e5aac5ba805825da76410c181273ba90b1`.
 - `actions/setup-node` v7.1.0 — `949feb2413d6458794dcd2491c4babbbce0c15c1`.
 - `actions/upload-artifact` v7.0.2 — `cf430e030ddbb5b0abf93d22962f4752f3646cd9`.
-- `astral-sh/setup-uv` v5.4.2 — `d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86`.
+- `astral-sh/setup-uv` v10.3.3 — `68559e99cc807c1eb7e9238fd43a15bba460eec2` (Node 24).
 
 The three Node action commits were resolved from official upstream release tags and their `action.yml` metadata was read at the exact commit. Each declares `runs.using: node24`.
 
@@ -73,3 +73,8 @@ The three Node action commits were resolved from official upstream release tags 
 - All six PRs remain open and draft. No merge, release, or production deployment occurred.
 
 All acceptance criteria AC1–AC8 are now verified.
+
+
+## Follow-up correction — setup-uv runtime
+
+A subsequent inspection of the exact pinned `action.yml` revealed that setup-uv v5.4.2 actually declared `runs.using: node20`; the earlier statement that it was a composite action was incorrect. The five manual Spec Kit workflows in Athlys2–Athlys6 were therefore migrated to setup-uv v10.3.3 at `68559e99cc807c1eb7e9238fd43a15bba460eec2`. The exact action metadata at that commit declares Node 24. All five component PR checks passed after the update. The new supply-chain workflow also pins and scans this action source.
