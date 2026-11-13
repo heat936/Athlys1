@@ -1,0 +1,171 @@
+name: Athlys — consolidated CI
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: athlys-consolidated-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  orchestrator-tests:
+    name: Athlys1 orchestrator tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout immutable source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Run orchestrator tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap test/*.test.mjs | tee test-results.tap
+      - name: Hash test evidence
+        if: always()
+        shell: bash
+        run: |
+          if [ -f test-results.tap ]; then sha256sum test-results.tap > test-results.sha256; fi
+      - name: Publish orchestrator test summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f test-results.tap ]; then
+            echo '## Athlys1 orchestrator test evidence' >> "$GITHUB_STEP_SUMMARY"
+            cat test-results.tap >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '## Athlys1 test evidence unavailable: test process did not produce output.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload orchestrator test evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: athlys1-test-evidence-${{ github.sha }}
+          path: |
+            test-results.tap
+            test-results.sha256
+          if-no-files-found: warn
+          retention-days: 90
+
+  consolidated-tests:
+    needs: orchestrator-tests
+    if: ${{ vars.ATHLYS_CI_READY == 'true' }}
+    name: Six-component test suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Athlys1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys1
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: components/Athlys1
+          persist-credentials: false
+      - name: Read immutable component lock
+        id: lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="components/Athlys1/specs/ci-orchestrator/component-lock.json"
+          test -s "$manifest"
+          for repo in Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            sha="$(jq -er ".components.${repo}.commit" "$manifest")"
+            [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+            # Prevent checkout action diagnostics and subsequent log lines from
+            # disclosing private component identifiers or immutable revisions.
+            echo "::add-mask::${repo}"
+            echo "::add-mask::heat936/${repo}"
+            echo "::add-mask::${sha}"
+            echo "${repo,,}=$sha" >> "$GITHUB_OUTPUT"
+          done
+      - name: Checkout Athlys2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys2
+          ref: ${{ steps.lock.outputs.athlys2 }}
+          path: components/Athlys2
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+      - name: Checkout Athlys3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys3
+          ref: ${{ steps.lock.outputs.athlys3 }}
+          path: components/Athlys3
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+      - name: Checkout Athlys4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys4
+          ref: ${{ steps.lock.outputs.athlys4 }}
+          path: components/Athlys4
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+      - name: Checkout Athlys5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys5
+          ref: ${{ steps.lock.outputs.athlys5 }}
+          path: components/Athlys5
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+      - name: Checkout Athlys6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys6
+          ref: ${{ steps.lock.outputs.athlys6 }}
+          path: components/Athlys6
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Run all component tests and record source identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          : > evidence/component-manifest.txt
+          for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            sha="$(git -C "components/$repo" rev-parse HEAD)"
+            printf '%s %s\n' "$repo" "$sha" | tee -a evidence/component-manifest.txt
+            (cd "components/$repo" && node --test --test-reporter=tap > "../../evidence/$repo.tap")
+          done
+          node --test --test-reporter=tap components/Athlys1/integration/cross-component.test.mjs | tee evidence/cross-component.tap
+          node components/Athlys1/src/source-inventory.mjs --root components --manifest evidence/component-manifest.txt --output evidence/source-inventory.cdx.json
+          (cd evidence && sha256sum *.tap source-inventory.cdx.json > SHA256SUMS)
+      - name: Publish consolidated summary
+        if: always()
+        shell: bash
+        run: |
+          echo '## Consolidated component evidence' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f evidence/component-manifest.txt ]; then
+            cat evidence/component-manifest.txt >> "$GITHUB_STEP_SUMMARY"
+            if [ -f evidence/SHA256SUMS ]; then
+              echo "### Evidence SHA-256" >> "$GITHUB_STEP_SUMMARY"
+              cat evidence/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo 'Component manifest was not produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload consolidated evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: athlys-six-component-evidence-${{ github.sha }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 90

@@ -1,0 +1,63 @@
+import { createHash } from "node:crypto";
+const SHA = /^[a-f0-9]{40}$/i;
+export const TERMINAL = new Set(["passed","failed","startup_failure","build_failure","timeout","cancelled","cached","skipped","unavailable","not_run"]);
+export function validateRun(run) {
+  const errors=[];
+  if (!run || typeof run !== "object") return ["run must be an object"];
+  if (!run.runId || typeof run.runId !== "string") errors.push("runId is required");
+  if (!run.repository || !/^[\w.-]+\/[\w.-]+$/.test(run.repository)) errors.push("repository must be owner/name");
+  if (!SHA.test(run.commitSha ?? "")) errors.push("commitSha must be a full 40-character SHA");
+  if (!run.ref || typeof run.ref !== "string") errors.push("ref is required");
+  if (!run.policyVersion || typeof run.policyVersion !== "string") errors.push("policyVersion is required");
+  if (!Array.isArray(run.requiredChecks) || run.requiredChecks.length === 0 || run.requiredChecks.some(x=>typeof x!=="string"||!x)) errors.push("requiredChecks must be a non-empty string array");
+  if (new Set(run.requiredChecks ?? []).size !== (run.requiredChecks ?? []).length) errors.push("requiredChecks must be unique");
+  return errors;
+}
+export function aggregateResults(run, results) {
+  const errors=validateRun(run);
+  if(errors.length) throw new TypeError(errors.join("; "));
+  const incoming=results??[];
+  if(new Set(incoming.map(r=>r.name)).size!==incoming.length) throw new TypeError("result names must be unique");
+  const byName=new Map(incoming.map(r=>[r.name,r]));
+  const unexpected=[...byName.keys()].filter(name=>!run.requiredChecks.includes(name));
+  if(unexpected.length) throw new TypeError("unexpected result names: "+unexpected.join(", "));
+  const checks=run.requiredChecks.map(name=>({name,...(byName.get(name)??{status:"unavailable",fresh:false,reason:"missing result"})}));
+  const invalid=checks.filter(c=>!TERMINAL.has(c.status));
+  if(invalid.length) throw new TypeError("unknown status for: "+invalid.map(x=>x.name).join(", "));
+  const status=checks.some(c=>c.status==="startup_failure")?"startup_failure":
+    checks.some(c=>c.status==="failed")?"failed":
+    checks.some(c=>c.status==="build_failure")?"build_failure":
+    checks.some(c=>c.status==="timeout")?"timeout":
+    checks.some(c=>c.status==="cancelled")?"cancelled":
+    checks.some(c=>c.status==="unavailable")?"incomplete":
+    checks.some(c=>c.status==="skipped"||c.status==="not_run")?"incomplete":
+    checks.some(c=>c.status==="cached"||c.fresh!==true)?"cached_only":"success";
+  return {runId:run.runId,repository:run.repository,commitSha:run.commitSha,status,complete:checks.every(c=>c.status==="passed"&&c.fresh===true),checks};
+}
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalize(value[key])]));
+  return value;
+}
+function canonicalDigest(payload) {
+  return createHash("sha256").update(JSON.stringify(canonicalize(payload))).digest("hex");
+}
+export function createEvidenceManifest(run, results, runner) {
+  const aggregate=aggregateResults(run,results);
+  const payload={schemaVersion:"1.0",run:{runId:run.runId,repository:run.repository,ref:run.ref,commitSha:run.commitSha,policyVersion:run.policyVersion},runner,aggregate};
+  return {...payload,integrity:{algorithm:"sha256",digest:canonicalDigest(payload),signed:false}};
+}
+export function verifyEvidenceManifest(manifest) {
+  const errors=[];
+  if(!manifest||typeof manifest!=="object"||Array.isArray(manifest)) return {valid:false,errors:["manifest must be an object"]};
+  if(manifest.schemaVersion!=="1.0") errors.push("unsupported schemaVersion");
+  if(!manifest.run||typeof manifest.run!=="object") errors.push("run identity is missing");
+  if(!manifest.aggregate||typeof manifest.aggregate!=="object") errors.push("aggregate is missing");
+  if(manifest.integrity?.algorithm!=="sha256") errors.push("integrity algorithm must be sha256");
+  if(!/^[a-f0-9]{64}$/i.test(manifest.integrity?.digest??"")) errors.push("integrity digest must be a SHA-256 hex digest");
+  if(errors.length===0) {
+    const {integrity,...payload}=manifest;
+    if(canonicalDigest(payload)!==integrity.digest.toLowerCase()) errors.push("evidence manifest digest mismatch");
+  }
+  return {valid:errors.length===0,errors,signed:manifest.integrity?.signed===true};
+}

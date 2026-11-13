@@ -1,0 +1,337 @@
+name: Athlys — SBOM and signed supply-chain attestations
+
+on:
+  push:
+    branches: ["spec/ci-independence-bootstrap"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: athlys-supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  supply-chain:
+    if: ${{ github.ref == 'refs/heads/spec/ci-independence-bootstrap' }}
+    name: Build SBOM and attest source bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SYFT_VERSION: "1.57.1"
+      SYFT_BINARY_SHA256: "bf52519eb57f675d47c07d43213cb6dff6449f3d6d1147ff6701ed91f44eef0c"
+    steps:
+      - name: Checkout Athlys1 orchestrator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys1
+          ref: ${{ github.sha }}
+          path: components/Athlys1
+          persist-credentials: false
+
+      - name: Read immutable component lock
+        id: lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest="components/Athlys1/specs/ci-orchestrator/component-lock.json"
+          test -s "$manifest"
+          for repo in Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            sha="$(jq -er ".components.${repo}.commit" "$manifest")"
+            [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+            echo "${repo,,}=$sha" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Checkout Athlys2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys2
+          ref: ${{ steps.lock.outputs.athlys2 }}
+          path: components/Athlys2
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Checkout Athlys3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys3
+          ref: ${{ steps.lock.outputs.athlys3 }}
+          path: components/Athlys3
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Checkout Athlys4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys4
+          ref: ${{ steps.lock.outputs.athlys4 }}
+          path: components/Athlys4
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Checkout Athlys5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys5
+          ref: ${{ steps.lock.outputs.athlys5 }}
+          path: components/Athlys5
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Checkout Athlys6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: heat936/Athlys6
+          ref: ${{ steps.lock.outputs.athlys6 }}
+          path: components/Athlys6
+          token: ${{ secrets.ATHLYS_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Verify immutable checkouts and create clean source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/internal evidence/public source-trees tool-sources
+          : > evidence/internal/component-manifest.txt
+          index=1
+          for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            actual="$(git -C "components/$repo" rev-parse HEAD)"
+            [[ "$actual" =~ ^[0-9a-f]{40}$ ]]
+            if [[ "$repo" == "Athlys1" ]]; then
+              test "$actual" = "${{ github.sha }}"
+            else
+              expected="$(jq -er ".components.${repo}.commit" components/Athlys1/specs/ci-orchestrator/component-lock.json)"
+              test "$actual" = "$expected"
+            fi
+            printf '%s %s\n' "$repo" "$actual" >> evidence/internal/component-manifest.txt
+            target="$(printf 'component-%02d' "$index")"
+            mkdir -p "source-trees/$target"
+            git -C "components/$repo" archive HEAD | tar -x -C "source-trees/$target"
+            index=$((index + 1))
+          done
+
+      - name: Set up Node.js for component verification
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: Run all component and integration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for repo in Athlys1 Athlys2 Athlys3 Athlys4 Athlys5 Athlys6; do
+            (cd "components/$repo" && node --test --test-reporter=tap > "$GITHUB_WORKSPACE/evidence/internal/$repo.tap")
+          done
+          node --test --test-reporter=tap components/Athlys1/integration/cross-component.test.mjs > evidence/internal/cross-component.tap
+          python3 -m unittest discover -s components/Athlys1/test -p 'test_supply_chain_sbom.py' -v
+
+      - name: Set up uv and Python for the pinned Spec Kit audit
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.7"
+          python-version: "3.12"
+          enable-cache: false
+
+      - name: Download and verify pinned Syft binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --retry-delay 2 \
+            "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz" \
+            -o /tmp/syft.tar.gz
+          echo "${SYFT_BINARY_SHA256}  /tmp/syft.tar.gz" | sha256sum --check -
+          tar -xzf /tmp/syft.tar.gz -C /tmp syft
+          chmod +x /tmp/syft
+          /tmp/syft version | tee evidence/internal/syft-version.txt
+          grep -q "${SYFT_VERSION}" evidence/internal/syft-version.txt
+
+      - name: Fetch pinned action and Spec Kit source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > evidence/internal/action-source-digests.tsv
+          clone_pinned() {
+            local repository="$1"
+            local commit="$2"
+            local destination="$3"
+            local version="$4"
+            local temp
+            temp="$(mktemp -d)"
+            git -C "$temp" init -q
+            git -C "$temp" remote add origin "https://github.com/${repository}.git"
+            git -C "$temp" fetch --quiet --depth 1 origin "$commit"
+            git -C "$temp" checkout --quiet --detach FETCH_HEAD
+            test "$(git -C "$temp" rev-parse HEAD)" = "$commit"
+            mkdir -p "$destination"
+            git -C "$temp" archive HEAD | tar -x -C "$destination"
+            local digest
+            digest="$(git -C "$temp" archive --format=tar HEAD | sha256sum | awk '{print $1}')"
+            local runtime="source"
+            if [ -f "$destination/action.yml" ]; then
+              runtime="$(python3 - "$destination/action.yml" <<'PY'
+          import re, sys
+          text = open(sys.argv[1], encoding="utf-8").read()
+          block = re.search(r"(?ms)^runs:\s*\n(.*?)(?=^[^ \t]|\Z)", text)
+          match = re.search(r"(?m)^\s+using:\s*['\"]?([^'\"\s]+)", block.group(1)) if block else None
+          print(match.group(1) if match else "unknown")
+          PY
+          )"
+            fi
+            printf '%s\t%s\t%s\t%s\t%s\n' "$repository" "$version" "$commit" "$digest" "$runtime" >> evidence/internal/action-source-digests.tsv
+            rm -rf "$temp"
+          }
+          clone_pinned "actions/checkout" "3d3c42e5aac5ba805825da76410c181273ba90b1" "tool-sources/actions-checkout" "v7.0.1"
+          clone_pinned "actions/setup-node" "949feb2413d6458794dcd2491c4babbbce0c15c1" "tool-sources/actions-setup-node" "v7.1.0"
+          clone_pinned "actions/upload-artifact" "cf430e030ddbb5b0abf93d22962f4752f3646cd9" "tool-sources/actions-upload-artifact" "v7.0.2"
+          clone_pinned "astral-sh/setup-uv" "68559e99cc807c1eb7e9238fd43a15bba460eec2" "tool-sources/setup-uv" "v10.3.3"
+          clone_pinned "actions/attest" "1e69f48acb82d1966a394da916b4c1698aa569d6" "tool-sources/actions-attest" "v4.2.2"
+          clone_pinned "github/spec-kit" "979b0a3c1277283371c9901ad0eed04b64a99997" "tool-sources/spec-kit" "git-pinned"
+
+      - name: Resolve and audit Spec Kit Python dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tool-sources/spec-kit
+          uv python install 3.12
+          uv lock --python 3.12
+          expected_lock_sha="$(awk '{print $1}' "$GITHUB_WORKSPACE/components/Athlys1/specs/ci-orchestrator/spec-kit-uv.lock.sha256")"
+          [[ "$expected_lock_sha" =~ ^[0-9a-f]{64}$ ]]
+          printf '%s  %s\n' "$expected_lock_sha" uv.lock | sha256sum --check -
+          uv sync --locked --python 3.12 --no-dev
+          test -x .venv/bin/specify
+          .venv/bin/specify --version | tee "$GITHUB_WORKSPACE/evidence/internal/specify-version.txt"
+          .venv/bin/specify check
+          .venv/bin/specify --help > "$GITHUB_WORKSPACE/evidence/internal/specify-help.txt"
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          (cd "$tmpdir" && "$GITHUB_WORKSPACE/tool-sources/spec-kit/.venv/bin/specify" init . --non-interactive --ignore-agent-tools)
+          test -d "$tmpdir/.specify"
+          uv pip freeze --python "$GITHUB_WORKSPACE/tool-sources/spec-kit/.venv/bin/python" > "$GITHUB_WORKSPACE/evidence/internal/spec-kit-python-freeze.txt"
+          cp uv.lock "$GITHUB_WORKSPACE/evidence/internal/spec-kit-uv.lock"
+          cp uv.lock "$GITHUB_WORKSPACE/evidence/public/spec-kit-uv.lock"
+
+      - name: Inventory source, actions, runner and build environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          node components/Athlys1/src/source-inventory.mjs \
+            --root components \
+            --manifest evidence/internal/component-manifest.txt \
+            --output evidence/internal/source-inventory.cdx.json
+          dpkg-query -W -f='${binary:Package}\t${Version}\n' > evidence/internal/dpkg-packages.tsv
+          tar -czf evidence/internal/athlys-source-snapshot.tar.gz -C source-trees .
+          source_digest="$(sha256sum evidence/internal/athlys-source-snapshot.tar.gz | awk '{print $1}')"
+          export SOURCE_ARCHIVE_SHA256="$source_digest"
+          export SYFT_BINARY_SHA256
+          python3 - <<'PY'
+          import json, os, pathlib, platform, subprocess
+          def run(*args):
+              return subprocess.check_output(args, text=True).strip()
+          os_release = {}
+          for line in pathlib.Path("/etc/os-release").read_text().splitlines():
+              if "=" in line:
+                  key, value = line.split("=", 1)
+                  os_release[key] = value.strip('"')
+          actions = []
+          for line in pathlib.Path("evidence/internal/action-source-digests.tsv").read_text().splitlines():
+              name, version, commit, digest, runtime = line.split("\t")
+              actions.append({
+                  "name": name, "version": version, "commit": commit,
+                  "source_archive_sha256": digest, "runtime": runtime
+              })
+          spec_commit = "979b0a3c1277283371c9901ad0eed04b64a99997"
+          spec_archive = subprocess.check_output(
+              ["tar", "-cf", "-", "-C", "tool-sources/spec-kit", "."]
+          )
+          import hashlib
+          spec_archive_sha = hashlib.sha256(spec_archive).hexdigest()
+          metadata = {
+              "syft_version": os.environ["SYFT_VERSION"],
+              "source_archive_sha256": os.environ["SOURCE_ARCHIVE_SHA256"],
+              "actions": actions,
+              "runner": {
+                  "name": os_release.get("PRETTY_NAME", "Ubuntu 24.04 GitHub-hosted runner"),
+                  "version": os_release.get("VERSION_ID", "unknown"),
+                  "image": os.environ.get("ImageOS", "unknown") + "/" + os.environ.get("ImageVersion", "unknown"),
+                  "kernel": platform.release()
+              },
+              "tools": [
+                  {"id": "node", "name": "Node.js", "version": run("node", "--version"), "purl": "pkg:generic/node"},
+                  {"id": "npm", "name": "npm", "version": run("npm", "--version"), "purl": "pkg:generic/npm"},
+                  {"id": "python", "name": "Python", "version": run("tool-sources/spec-kit/.venv/bin/python", "--version"), "purl": "pkg:generic/python"},
+                  {"id": "uv", "name": "uv", "version": run("uv", "--version"), "purl": "pkg:generic/uv"},
+                  {"id": "specify-cli", "name": "GitHub Spec Kit CLI", "version": pathlib.Path("evidence/internal/specify-version.txt").read_text().strip(), "purl": "pkg:generic/specify-cli", "source_commit": spec_commit},
+                  {"id": "syft", "name": "Syft", "version": os.environ["SYFT_VERSION"], "purl": "pkg:generic/syft", "sha256": os.environ["SYFT_BINARY_SHA256"], "source_commit": "a0c0d3890a9d79421c403e8fcadec50a2e55bf21"},
+                  {"id": "spec-kit-source", "name": "GitHub Spec Kit source", "version": "pinned-source", "purl": "pkg:github/github/spec-kit", "source_commit": spec_commit, "sha256": spec_archive_sha},
+                  {"id": "github-cli", "name": "GitHub CLI", "version": run("gh", "--version").splitlines()[0], "purl": "pkg:generic/gh"}
+              ]
+          }
+          pathlib.Path("evidence/internal/build-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+          PY
+          /tmp/syft dir:source-trees -o cyclonedx-json=evidence/internal/syft-source.cdx.json
+          /tmp/syft dir:tool-sources -o cyclonedx-json=evidence/internal/syft-tools.cdx.json
+          python3 components/Athlys1/scripts/build-supply-chain-sbom.py \
+            --source-inventory evidence/internal/source-inventory.cdx.json \
+            --syft-source evidence/internal/syft-source.cdx.json \
+            --syft-tools evidence/internal/syft-tools.cdx.json \
+            --dpkg evidence/internal/dpkg-packages.tsv \
+            --python-freeze evidence/internal/spec-kit-python-freeze.txt \
+            --build-metadata evidence/internal/build-metadata.json \
+            --private-commits evidence/internal/component-manifest.txt \
+            --output evidence/public/athlys-supply-chain.cdx.json
+          jq -e '.bomFormat == "CycloneDX" and .specVersion == "1.6" and (.components | length > 6)' evidence/public/athlys-supply-chain.cdx.json > /dev/null
+          (cd evidence/public && sha256sum athlys-supply-chain.cdx.json spec-kit-uv.lock > SHA256SUMS && sha256sum --check SHA256SUMS)
+          sha256sum evidence/internal/athlys-source-snapshot.tar.gz > evidence/internal/SOURCE-SNAPSHOT.sha256
+          echo "Source bundle SHA-256: $source_digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "Sanitized CycloneDX 1.6 SBOM generated; private repository identifiers and source revisions were redacted." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest source bundle provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: evidence/internal/athlys-source-snapshot.tar.gz
+
+      - name: Attest source bundle SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: evidence/internal/athlys-source-snapshot.tar.gz
+          sbom-path: evidence/public/athlys-supply-chain.cdx.json
+
+      - name: Verify signed provenance and CycloneDX SBOM attestation
+        shell: bash
+        run: |
+          set -euo pipefail
+          signer="heat936/Athlys1/.github/workflows/supply-chain-attestation.yml"
+          for attempt in 1 2 3 4 5 6; do
+            if gh attestation verify evidence/internal/athlys-source-snapshot.tar.gz \
+              --repo heat936/Athlys1 --signer-workflow "$signer"; then
+              break
+            fi
+            if [ "$attempt" -eq 6 ]; then exit 1; fi
+            sleep 10
+          done
+          for attempt in 1 2 3 4 5 6; do
+            if gh attestation verify evidence/internal/athlys-source-snapshot.tar.gz \
+              --repo heat936/Athlys1 --signer-workflow "$signer" \
+              --predicate-type https://cyclonedx.org/bom; then
+              break
+            fi
+            if [ "$attempt" -eq 6 ]; then exit 1; fi
+            sleep 10
+          done
+
+      - name: Upload sanitized public SBOM only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: athlys-public-supply-chain-sbom-${{ github.sha }}
+          path: |
+            evidence/public/athlys-supply-chain.cdx.json
+            evidence/public/spec-kit-uv.lock
+            evidence/public/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
