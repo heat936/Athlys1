@@ -22,3 +22,12 @@ Reduce accidental disclosure in workflow logs immediately, while defining the re
 
 ## Security boundary
 GitHub log masking is defense in depth, not a substitute for secret storage. It does not remove values already committed to Git history, and it does not guarantee redaction from artifacts or summaries. The public component lock remains an acknowledged exposure until replaced by protected secret-backed configuration.
+
+
+## Verification snapshot — 2026-11-13
+
+- Fresh PR workflow run #129 on 2026-11-12, source branch head `ed32b69eaa30df56f83487cc6e19b0b12c624ab5`: [run 43247445216](https://github.com/heat936/Athlys1/actions/runs/43247445216).
+- The `Read immutable component lock` step executed all three `::add-mask::` directives (component alias, full repository identifier, immutable revision) before the five private checkout steps.
+- Both jobs succeeded. The dedicated orchestrator job passed 23/23 tests. The consolidated evidence artifact records 27/27 Athlys1, 4/4 Athlys2, 5/5 Athlys3, 6/6 Athlys4, 5/5 Athlys5 and 6/6 Athlys6 tests: 53 distinct tests passed. The separate cross-component suite passed 4/4 and is already included in Athlys1's 27.
+- Independently checked all eight SHA-256 entries in the consolidated evidence artifact; 8/8 matched. Artifact ZIP digest: `sha256:fba28267e475ff2104b2f1cdb3d97ceaf0d0c4c32924547da4f0cf218780acc3`.
+- The protected-secret migration remains blocked: the connected integration does not expose Actions secret/variable management. The public component lock and historical artifacts remain unresolved; no secret value was read or changed.

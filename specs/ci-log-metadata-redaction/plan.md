@@ -9,3 +9,8 @@
 
 ## Current execution boundary
 The connected GitHub integration supports branch/file/PR/workflow operations but does not expose repository Actions secret or variable management. Therefore step 5 cannot be completed through the current integration. Do not attempt a raw API workaround or ask the user to paste credentials into chat.
+
+
+## Execution record — 2026-11-13
+
+Step 4 was verified by PR run #129 at source SHA `ed32b69eaa30df56f83487cc6e19b0b12c624ab5`. Both consolidated jobs succeeded; the mask-registration step ran before private checkouts; the dedicated test job passed 23/23 and the six-component artifact contains 53/53 distinct passing tests (cross-component 4/4 included in Athlys1's 27). All eight artifact checksums were independently verified. Step 5 remains blocked because the connected GitHub integration cannot provision or inspect Actions secrets/variables. No raw API workaround was attempted.

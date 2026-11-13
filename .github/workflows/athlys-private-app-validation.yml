@@ -22,13 +22,13 @@ jobs:
       - name: Mask private source identity before checkout
         shell: bash
         run: |
-          echo "::add-mask::Lijw936/Athlys2"
+          echo "::add-mask::heat936/Athlys2"
           echo "::add-mask::43fcb4ef0ab405631d56c5d74799bd9a7f296958"
 
       - name: Clone immutable private Athlys source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: Lijw936/Athlys2
+          repository: heat936/Athlys2
           ref: 43fcb4ef0ab405631d56c5d74799bd9a7f296958
           token: ${{ secrets.ATHLYS_READ_TOKEN }}
           path: private-source
